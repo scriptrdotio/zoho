@@ -33,8 +33,12 @@ zoho.prototype.updateTicketStatus = function(id, status, department){
 }
 
 zoho.prototype.createTicket = function(contactName, contactEmail, subject, message, deviceId, status, department){
-  if(!department){
+   if(!department){
    	   department = config.department;
+   }
+   
+   if(!deviceId || !deviceId.trim().length){
+   	deviceId = department;
    }
     var xmlTicket = this._buildXMLTicketRow(contactName, contactEmail, subject, message, deviceId, status);
   
