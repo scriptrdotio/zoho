@@ -2,7 +2,7 @@
 [Zoho](http://www.zoho.com "Zoho") is a CRM and Support as a service platform. 
 ## Purpose of the scriptr zoho module
 This module allows you access to zoho support APIs from scriptr.io, by providing you with a few apis that you can directly call from your own scriptr application. 
-For example, using the information about the speed of a vehicle and its oil level, you can create zoho ticket based on the threshold rules for speed and oild you have defined in your application, you can also list all the tickets of the vehicle, as well as update the status of those tickets.
+For example, using the information about the speed of a vehicle and its oil level, you can create zoho ticket based on the threshold rules for speed and oil you have defined in your application, you can also list all the tickets of the vehicle, as well as update the status of those tickets.
 
 ## Configuring Zoho Module
 
