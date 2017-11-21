@@ -1,8 +1,12 @@
 var config =  require("../config");
 var client = require("./client");
 
-function zoho(){
+function zoho(configuration){
+    if(configuration){
+        config = configuration
+    }
 }
+
 
 zoho.prototype.updateTicketStatus = function(id, status, department){
    if(!department){
