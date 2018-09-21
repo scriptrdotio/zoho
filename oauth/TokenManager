@@ -206,7 +206,7 @@ function _getDocumentKey(username) {
 function _getUsernameFromState(state){
 
     var resp = document.get(util.getStateDocumentKey(state));
-    if (resp.result.key){
+    if (resp.result && resp.result.key){
         return resp.result.username;
     }
 
