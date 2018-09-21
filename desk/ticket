@@ -1,0 +1,129 @@
+var config = require("../config");
+
+const API_TYPE = "desk_";
+const API_PREFIX = "api_prefix";
+const API_VER = "api_ver";
+
+/**
+ * @class Ticket
+ * @constructor
+ * @param {Object} [dto]
+ * @param {Object} [dto.data]: intialisation data or content
+ * @param {Object} [dto.client]: instance of client
+ * @param {String} [dto.orgId]: related organization id
+ */
+function Ticket(dto) {
+
+    if (!dto || !dto.data || !dto.client || !dto.orgId) {        
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "Ticket: dto.data, dto.client and dto.orgId have to be provided"
+        };
+    }
+
+    for (var key in dto.data) {
+        this[key] = dto.data[key];
+    }
+
+    this.orgId = dto.orgId;
+    this.client = dto.client;
+}
+
+/**
+ * @method close
+ * @return {Object} updated ticket data
+ * @throw {Error}
+ */
+Ticket.prototype.close = function() {
+
+    this.status = "Closed";
+    return this.update({status:this.status});
+};
+
+/**
+ * @method escalate
+ * @return {Object} updated ticket data
+ * @throw {Error}
+ */
+Ticket.prototype.escalate = function() {
+
+    this.status = "Escalated";
+    return this.update({status:this.status});
+};
+
+/**
+ * update ticket using current the current values of the instance's  attributes
+ * NOTE: zoho desk does not allow updating some attributes, which is not documented. we did not test exhaustively to identify all of them,
+ * @method update
+ * @return {Object} updated data
+ * @throw {Error}
+ */
+Ticket.prototype.update = function(data) {
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tickets/" + this.id,
+        headers: {
+            orgid: this.orgId
+        },
+        method: "PATCH"
+    };
+
+    if (data) {
+        requestParams.params = data;
+    }else {
+
+        var params = {};
+        var exclude = ["id", "client", "orgId", "responseDueDate", "modifiedBy", "isResponseOverdue", "accountId"];
+        for (var key in this){
+
+            if (exclude.indexOf(key) == -1) {
+                params[key] = this[key]
+            }
+        }
+
+        requestParams.params = params;
+    }
+
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method markAsRead
+ * @return {String} empty string
+ * @throw {Error}
+ */
+Ticket.prototype.markAsRead = function() {
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tickets/" + this.id + "/markAsRead",
+        headers: {
+            orgid: this.orgId
+        },
+        method: "POST"
+    };    
+
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * Removes client data and orgId
+ * @method toJson()
+ * @return {Object} ticket data as JSON structure
+ */
+Ticket.prototype.toJSON = function() {
+
+    var data = {};
+    var exclude = ["client", "orgId"];
+    for (var key in this){
+
+        if (exclude.indexOf(key) == -1) {
+            data[key] = this[key]
+        }
+    }
+    
+    return data;
+};

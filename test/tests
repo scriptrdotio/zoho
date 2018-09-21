@@ -1,0 +1,201 @@
+/**
+ * Manual tests. You need to check the results by going back and forth to your zoho account
+ */
+
+var zohoModule = require("../zoho");
+var zohoCompatibilityModule = require("../lib/zoho");
+var username = "test"; // replace with valid data
+var orgid = "634062529"; // replace with valid data
+var validDptId = "128390000000006907"; // replace with valid data
+var validContactId = "128390000000093003"; // replace with valid data
+var validPortalName = "scriptrio"; // replace with valid data
+var validDptName = "scriptrio"; // replace with valid data
+var ticketId = "";
+try {
+
+    /* instanciate the Zoho connector using some zoho username for which you have been obtained an access_token */
+    var zoho = new zohoModule.Zoho({username:username});
+
+    /* obtain an instance of OrganizationManager from the connector */
+    var organizationManager = zoho.getOrganizationManager();
+
+    /* list all organizations */
+    //var organizationList = organizationManager.listOrganizations(); 
+    
+    /* find organization by portal name */
+    //var organization = organizationManager.findOrganizationByFieldName(validPortalName, "portalName");
+    
+    /* list first 50 departments of a given organization */
+    //var departmentList = organizationManager.listDepartments(orgid, {limit:50});
+    
+    /* department by name for a given organization */
+    //var department = organizationManager.findDepartmentByFieldName(orgid, validDptName, "name");
+
+    /*
+     * Manage tickets
+     */
+
+    /* obtain an instance of TicketManager from the connector, for a given organization id */
+    var ticketManager = zoho.getTicketManager({orgId:orgid});
+
+    var ticketList = []; 
+
+    /* list tickets sorted by creation time in descending order, limited to 10 results */
+    //ticketList = ticketManager.listTickets({limit:10, sortBy:"-createdTime"}); 
+
+    /* list tickets assigned to a given department id, limited to 2 results */
+    //ticketList = ticketManager.listTickets({limit:2, departmentId:validDptId}); 
+    
+    /* list all tickets with status "on hold" */
+    // ticketList = ticketManager.listTickets({status:"on hold"});
+
+    /* list all tickets with status "escalated" */
+    //ticketList = ticketManager.listTickets({status:"escalated"});
+    
+    /* search tickets (more flexible than listTickets) */
+    //ticketList = ticketManager.searchTicketsByFields({contactId:validContactId, subject: "smo*"}).data; 
+
+    /* get a given Ticket instance by ticket id */
+    //var ticket = ticketManager.getTicket(ticketList[0].id);
+
+    /* close a ticket using a Ticket instance */
+    //var closeResult = ticket.close();
+
+    /* escalate a ticket using a Ticket instance */
+    //var escalateResult = ticket.escalate();
+
+    /* mark a ticket as read using a Ticket instance */
+    //var markAsReadResult = return ticket.markAsRead();
+
+    var newTicketData = {};
+
+    /* create a new ticket with subject only */    
+    /*
+    newTicketData = {
+      	subject: "Smoke detected",
+        departmentId: validDptId,
+        contactId: validContactId
+    };
+
+    ticket = ticketManager.createTicket(newTicketData);
+    console.log(JSON.stringify(ticket.toJSON()));
+    */   
+
+    /* create a new ticket with subject and description only */
+    /*
+    newTicketData = {
+      	subject: "Smoke detected",
+        departmentId: validDptId,
+        contactId: validContactId,
+        description: "Smoke was detected in the trunk"
+    };
+
+    ticket = ticketManager.createTicket(newTicketData);
+    console.log(JSON.stringify(ticket.toJSON()));
+    */        
+
+    /* delete a ticket */
+    //ticketManager.deleteTickets([ticket.id]);    
+
+    /*
+     * Manage tasks
+     */
+
+    /* obtain an instance of TaskManager from the connector, for a given organization id */
+    var taskManager = zoho.getTaskManager({orgId:orgid});
+    var task = {}; 
+
+    /* Create task with subject only */
+    //task = taskManager.createTask({subject:"work to do", departmentId: validDptId});
+
+    /* Create task with subject and description only */
+    //task = taskManager.createTask({subject:"work to do", departmentId: validDptId, description: "some additional stuff"});
+
+    /* Create task with subject, description and status */
+    //task = taskManager.createTask({subject:"work to do", departmentId: validDptId, description: "some additional stuff", status: "Started"});
+
+    /* List all tasks */
+    //var taskList = taskManager.listTasks(); return taskList;
+
+    /* Get a task by id */
+    //task = taskManager.getTask(taskList[0].id);
+
+    /* Update a given task by modifying some of its propeties */
+    /*
+    task.subject = "some more work to do";
+    task.dueDate = new Date(new Date().getTime() + 1000000).toISOString() ;
+    task.category = "technical support";
+    task.priority = "high";
+    task.update();
+    */
+
+    /*
+     * Manage leads
+     */
+
+    var leadManager = zoho.getLeadManager({orgId:orgid});
+    
+    /* create a new lead */
+    /*
+    var leadData = {
+        
+        "Company": "Zylker",
+        "Last_Name": "Daly",
+        "First_Name": "Paul",
+        "Email": "p.daly@zylker.com",
+        "State": "Texas"
+    };
+    
+    var leadData = leadManager.createLeads(leadData);
+    */
+    
+    /* list leads with no filters*/
+    var leadList = leadManager.listLeads();
+    
+    /*
+     * Manage zoho desk contacts
+     */
+    
+    var contactManager = zoho.getContactManager({orgId:orgid, domain: "desk"});
+    
+    /* search contact by email */
+    //var contact = contactManager.searchContactsByFieldValue("test@scriptr.io", "email").data[0];
+    
+    /* list 10 first contacts */
+    //var contactList = contactManager.listContacts({limit:10}); return contactList
+    
+    /*
+     * Test backward compatibility
+     */
+    var config = {
+        
+        user: "test", // in the former version we used to pass an auth token. You should now pass a username for which you have an access_token
+        portal: "scriptrio",
+        department: "scriptrio"
+    };
+    
+    var oldZoho = new zohoCompatibilityModule.zoho(config);
+    
+    /* Create a ticket */
+    //var ticketData = oldZoho.createTicket("Test User", "test@scriptr.io", "dashboard builder", "Assist in understanding", "dev0001", "Open");
+    
+    /* Create a lead */
+    /*
+    var lead = {
+        
+        "name": "Paul Daly",
+        "email": "p.daly@zylker.com",
+        "source": "test@scriptr.io"
+    };
+    
+	var leadData = oldZoho.createLead(lead.name, lead.email, lead.source);
+    */
+    
+    /* search tickets  where subject like som*  */
+    //var list = oldZoho.getrecordsbysearch("subject", "smo*"); 
+    
+    var list = oldZoho.getrecordsbysearch("subject", "dev0001*"); return list;
+    
+}catch(exception){
+    return exception;
+}

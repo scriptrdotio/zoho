@@ -1,0 +1,69 @@
+var config = require("../config");
+
+const API_TYPE = "desk_";
+const API_PREFIX = "api_prefix";
+const API_VER = "api_ver";
+
+/**
+ * @class Task
+ * @constructor
+ * @param {Object} [dto]
+ * @param {Object} [dto.data]: intialisation data or content
+ * @param {Object} [dto.client]: instance of client
+ * @param {String} [dto.orgId]: related organization id
+ */
+function Task(dto) {
+    
+    if (!dto || !dto.data || !dto.client || !dto.orgId) {        
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "Task: dto.data, dto.client and dto.orgId have to be provided"
+        };
+    }
+    
+    for (var key in dto.data) {
+        this[key] = dto.data[key];
+    }
+
+    this.orgId = dto.orgId;
+    this.client = dto.client;
+}
+
+/**
+ * update task using current the current values of the instance's  attributes
+ * NOTE: zoho desk does not allow updating some attributes, which is not documented. we did not test exhaustively to identify all of them,
+ * @method update
+ * @return {Object} updated data
+ * @throw {Error}
+ */
+Task.prototype.update = function(data) {
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tasks/" + this.id,
+        headers: {
+            orgid: this.orgId
+        },
+        method: "PATCH"
+    };
+
+    if (data) {
+        requestParams.params = data;
+    }else {
+
+        var params = {};
+        var exclude = ["id", "contactId", "completedTime", "orgId", "client"];
+        for (var key in this){
+
+            if (exclude.indexOf(key) == -1) {
+                params[key] = this[key]
+            }
+        }
+
+        requestParams.params = params;
+    }
+
+    return this.client.callApi(requestParams);
+};

@@ -1,0 +1,253 @@
+var config = require("../config");
+var ticketmodule = require("./ticket");
+
+const API_TYPE = "desk_";
+const API_PREFIX = "api_prefix";
+const API_VER = "api_ver";
+
+/** 
+ * Provide CRUD operations on tickets
+ * @class TicketManager
+ * @constructor TicketManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: targeted organization's id
+ * @param {Object} [dto.client]: instance of Client
+ */
+function TicketManager(dto) {
+
+    if (!dto || !dto.orgId || !dto.client) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "TicketManager: dto.client and dto.orgId have to be provided"
+        };
+    }
+
+    this.orgId = dto.orgId;
+    this.client = dto.client;
+}
+
+/**
+ * @method listTickets
+ * @param {Object} [filters]: optional filters
+ * @param {Number} [filters.from]: index starting from which the tickets must be listed
+ * @param {Number} [filters.limit]: max number of tickets to fetch
+ * @param {Number} [filters.departmentId]: id of the related organizational division from which the tickets must be fetched
+ * @param {Number} [filters.viewId]: id of the view (customized display of help desk data) to apply while fetching the resources
+ * @param {String} [filters.assignee]: key that filters tickets by assignee. Multiple assigneeIds can be passed as comma-separated values
+ * @param {String} [filters.channel]: channel through which the tickets originated. Multiple values can be passed by separating them with a comma
+ * @param {String} [filters.status]: resolution status ('open', 'on hold', 'closed', 'escalated') of the ticket. Multiple values can be passed by separating them with a comma
+ * @param {String} [filters.sortBy]: sort by a specific attribute: "dueDate" or "recentThread". Prefixing with "-" sorts in descending order
+ * @param {Number} [filters.receivedInDays]: allowed values are 15, 30 , 90
+ * @param {String} [filters.include]: key that returns additional information related to a ticket. One off: contacts, products, and assignee.
+ * multiples separated values are allowed
+ * @param {String} [filters.priority]: one of "High", "Low", "Normal". Multiple values can be passed by separating them with a comma
+ * @return {Array} array of tickets data
+ * @throw {Error}
+ */
+TicketManager.prototype.listTickets = function(filters) {
+
+    var requestParams = {
+        
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tickets",
+        headers: {
+            orgId: this.orgId
+        }
+    };
+
+    if (filters){
+        requestParams.params = filters;
+    }
+
+    var resp = this.client.callApi(requestParams);    
+    if (resp.data){        
+        return resp.data;        
+    }
+    
+    return [];
+};
+
+/**
+ * A more flexible version of listTickets to search using multiple fields, allows using wildcards - *). 
+ * @method searchTicketsByFields
+ * @param {Object} [filters]: a map of key/values where each key is a field name and value is the value to filter the field by
+ * @param {Number} [filters.from]: index starting from which the tickets must be listed
+ * @param {Number} [filters.limit]: max number of tickets to fetch
+ * @param {String} [filters.sortBy]: sort by one of the following criteria to specify: relevance, modifiedTime, createdTime, customerResponseTime
+ * @return {Object} {data: array of tickets data, count: total results}
+ * @throw {Error}
+ */
+TicketManager.prototype.searchTicketsByFields = function(filters) {
+
+    var requestParams = {
+        
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tickets/search",
+        headers: {
+            orgId: this.orgId
+        },
+        method: "GET"
+    };
+
+    if (filters){
+        requestParams.params = filters;
+    }
+
+    var resp = this.client.callApi(requestParams);    
+    if (resp.data){        
+        return resp;        
+    }
+    
+    return {data: [], count: 0};
+};
+
+/**
+ * @method getTicket
+ * @param {String} id: ticket's identifier
+ * @param {String} include: optional list of data type to include: contacts, products, and assignee. Multiples separated values are allowed
+ * @return {Object} instance of Ticket
+ * @throws {Error}
+ */
+TicketManager.prototype.getTicket = function(id, include) {
+
+    if (!id) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "TicketManager.getTicket: id has to be provided"
+        };
+    }
+    
+    var requestParams = {
+        
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tickets/" + id,
+        headers: {
+            orgId: this.orgId
+        }
+    };
+
+    if (include){
+        
+        requestParams.params = {
+            include: include
+        };
+    }
+
+    var ticketData = this.client.callApi(requestParams);
+    return new ticketmodule.Ticket({data:ticketData, client:this.client, orgId: this.orgId});
+};
+
+/**
+ * @method createTicket
+ * @param {Object} data: ticket data, such as: "subCategory", "productId", "contactId", "subject", "dueDate", "departmentId",
+ * "channel", "description", "priority" ("High, "Normal", "Low"), "assigneeId", "phone", "category" (e.g. "general"), "email",
+ * "status" (e.g. "Open")
+ * NOTE: subject, contactId and departmentId are mandatory
+ * @return {Object} instance of Ticket
+ * @throws {Error}
+ */
+TicketManager.prototype.createTicket = function(data) {
+
+    if (!data || !data.subject || !data.contactId || !data.departmentId) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "TicketManager.createTicket: data.contactId and data.departmentId have to be provided"
+        };
+    }
+    
+    var requestParams = {
+        
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tickets",
+        headers: {
+            orgId: this.orgId
+        },
+        method: "POST",
+        params: data
+    };
+    
+    var ticketData = this.client.callApi(requestParams);
+    return new ticketmodule.Ticket({data:ticketData, client:this.client, orgId: this.orgId});
+};
+
+/**
+ * update ticket using provided data
+ * NOTE: zoho desk does not allow updating some attributes, which is not documented. we did not test exhaustively to identify all of them,
+ * @method update
+ * @param {String} id: ticket id
+ * @param {Object} data
+ * @return {Object} updated data
+ * @throw {Error}
+ */
+TicketManager.prototype.updateTicket = function(data) {
+
+    if (!id || !data) {
+        
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "TicketManager.updateTicket: id and data have to be provided"
+        };
+    }
+    
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tickets/" + id,
+        headers: {
+            orgid: this.orgId
+        },
+        method: "PATCH"
+    };
+
+    if (data) {
+        requestParams.params = data;
+    }else {
+
+        var params = {};
+        var exclude = ["id", "client", "orgId", "responseDueDate", "modifiedBy", "isResponseOverdue", "accountId"];
+        for (var key in this){
+
+            if (exclude.indexOf(key) == -1) {
+                params[key] = this[key]
+            }
+        }
+
+        requestParams.params = params;
+    }
+
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method deleteTickets
+ * @param {Array} idList: list of ticket identifiers (at least one id)
+ * @return {String} empty string
+ * @throws {Error}
+ */
+TicketManager.prototype.deleteTickets = function(idList) {
+
+    if (!idList || idList.length == 0) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "TicketManager.deleteTicket: You need to provide a list of ticket ids"
+        };
+    }
+    
+    var requestParams = {
+        
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tickets/moveToTrash",
+        headers: {
+            orgId: this.orgId
+        },
+        method: "POST",
+        params: {
+            ticketIds: idList
+        }
+    };
+    
+    return this.client.callApi(requestParams);
+};

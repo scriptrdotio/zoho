@@ -1,0 +1,51 @@
+var document = require("document");
+var config = require("../config");
+var util = require("../util");
+
+try {
+
+    var username = request.parameters.username;
+    if (!username) {
+
+        return {
+
+            "status": "failure",
+            "errorCode": "Missing_Parameter",
+            "errorDetail": "You need to send the mandatory 'username' parameter with a value"
+        };
+    }
+
+    var state = util.getState();
+    var requestParams = "" +
+        "response_type=" + config.response_type +
+        "&client_id=" + config.client_id +
+        "&scope=" + config.scope +
+        "&access_type=" + config.access_type +
+        "&redirect_uri=" + encodeURIComponent(config.redirect_uri) +
+        "&state=" + state;
+
+    // associate the state to the provided username in order to further map the access token to that user
+    var doc = {
+    
+        key: util.getStateDocumentKey(state),
+        state: state,
+        username: username
+    };
+    
+    var resp = document.create(doc);
+    if (resp.metadata.status == "failure") {
+        
+        log.error("Failed to save state:\n" + JSON.stringify(resp));
+        throw resp;
+    }
+    
+    return config.authorizationGrantURI + "?" + requestParams;
+}catch(exception) {
+
+    return {
+
+        "status": "failure",
+        "errorCode": exception.errorCode ? exception.errorCode : "Internal_Error",
+        "errorDetail": exception.errorDetail ? exception.errorDetail : exception
+    };
+}		

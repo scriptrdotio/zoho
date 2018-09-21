@@ -1,4 +1,51 @@
-var crmAuthToken = "";
-var supportAuthToken ="b8a1446096351a33eb42d39f29c580bc";
-var portal = "scriptrdev";
-var department = "scriptrdev";
+const TYPE = "crm";
+const SOURCE = "zoho";
+
+var app_name = "zoho_connector"; // Current app's name. you can replace the default value with your own
+
+var desk_api_prefix = "https://desk.zoho.com/api";
+
+var crm_api_prefix = "https://www.zohoapis.com/crm";
+
+var desk_api_ver = "v1";
+
+var crm_api_ver = "v2";
+
+var auth_version = "v2";
+
+var authorizationGrantURI = "https://accounts.zoho.com/oauth/" + auth_version + "/auth";
+
+var accessTokenURI = "https://accounts.zoho.com/oauth/" + auth_version + "/token";
+
+var response_type =	"code";
+
+// Create an application in your zoho account using the dev console https://accounts.zoho.com/developerconsole
+// then copy/paste your client_id and client_secret below
+var client_id = "<your_zoho_app_client_id>";	//Client ID generated after registering the app
+
+var client_secret = "<your_zoho_app_client_secret>"; //Client secret generated after registering the app
+
+// Redirect URI mentioned while registering the client. Should refer to getAuthorizationToken
+var redirect_uri = "https://api.scriptrapps.io/zoho/oauth/getAccessToken?auth_token=<use_a_valid_scriptr.io_auth_token>"; 
+
+ // The various scopes associated with Zoho Desk for tickets and tasks management
+var scope = "Desk.tickets.READ,Desk.tickets.WRITE,Desk.basic.READ,Desk.basic.WRITE,Desk.tasks.READ,Desk.tasks.WRITE,ZohoCRM.modules.leads.ALL,ZohoCRM.modules.contacts.READ,Desk.contacts.READ,Desk.search.READ,ZohoCRM.modules.Cases.ALL";
+
+var access_type = "offline"; // one of online/offline, use offline to obtain refresh tokens
+
+var grant_type = "authorization_code";
+
+/*
+ * Backward compatibility variables. Only use when you need to maintain compatibility in application
+ * using the former version of the connector
+ */
+
+// Replace with your company's portal name
+var portal = "scriptrio"; 
+
+// Replace this with the name of a user for whom you have generated an access_token or pass the user within configuration param
+// since old auth token are deprecated, you need to obtain an oauth access token for this user. Check the /oauth folder
+var user = "test"; 
+
+// Replace with your company's department name
+var department = "scriptrio"; 

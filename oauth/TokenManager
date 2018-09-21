@@ -1,0 +1,226 @@
+
+/**
+ * This module is in charge of obtaining an OAuth 2.0 access token, either from 
+ * a provided code or from a provided refresh token, for a given user.
+ * The module stores the access and refresh token in a document
+ * @module TokenManager
+ */
+
+var log = require("log"); log.setLevel("info");
+var document = require("document");
+var config = require("../config");
+var util = require("../util");
+var http = require("http");
+
+/** 
+ * Retrieve the access and refresh tokens of a given user from the document store
+ * This method can throw exceptions
+ * @method getPersistedTokens
+ * @param {String} username : the name of the user for who we need the corresponding tokens
+ * @return {Object} {accessToken, refreshToken}
+ */
+function getPersistedTokens(username) {
+
+    var accessToken = "";
+    var refreshToken = "";    
+
+    var key = _getDocumentKey(username); 
+    log.info("Loading access token for " + username + " from " + key);
+    var resp = document.get(key);
+    if (resp.metadata && resp.metadata.status == "failure") {        
+
+        log.error("TokenManager.getPersistedTokens:\n" + JSON.stringify(resp));
+        throw resp;
+    }
+
+    accessToken = resp.result.access_token;
+    refreshToken = resp.result.refresh_token;
+    if (!accessToken || !refreshToken) {
+
+        throw {
+            "errorCode": "Missing_Access_Token",
+            "errorDetail": "Could not find an access token or a refresh token for this user " + username
+        };
+    }
+
+    return {
+        "accessToken": accessToken,
+        "refreshToken": refreshToken
+    };
+}
+
+/**
+ * Invoke the authorization API to obtain an access token
+ * This method can throw exceptions
+ * @method getAccessToken
+ * @param {Object} params
+ * @param {String} params.state : the state that was generated when issuing the auth request
+ * @param {String} params.code : the OAuth code returned by the OAuth API further to the auth grant request, to be exchanged for an access token
+ * @return {Object} the API response. You do not need it normally. Get the tokens using getPersistedTokens()
+ */
+function getAccessToken(params) {
+
+    if (!params) {
+
+        throw {
+            "errorCode": "Invalid_Parameter",
+            "errorDetail": "getAccessToken - params cannot be null or empty"
+        };
+    }
+
+    var newParams = {
+
+        "state": params.state,
+        "code": params.code,
+        "grant_type": config.grant_type,
+        "redirect_uri": config.redirect_uri,
+        "client_id": config.client_id,
+        "client_secret": config.client_secret
+    };
+
+    return _getToken(newParams);
+}
+
+/**
+ * Invoke the OAuth API to obtain an access token using a refresh token
+ * This method can throw exceptions
+ * @method getAccessToken
+ * @param {String} username : the name of the user for who we need to obtain a new access token
+ * @return {Object} the API response. You do not need it normally. Get the tokens using getPersistedTokens()
+ */
+function refreshAccessToken(username) {
+
+    if (!username) {
+
+        throw {
+            "errorCode": "Invalid_Parameter",
+            "errorDetail": "You need to pass a username to refresh the token"
+        };
+    };
+
+    log.info("Refreshing token for " + this.username);
+    var refreshToken = getPersistedTokens(username).refreshToken;
+    var refreshParams = {
+
+        "grant_type": "refresh_token",
+        "refresh_token": refreshToken,
+        "redirect_uri": config.redirect_uri,
+        "client_id": config.client_id,
+        "client_secret": config.client_secret
+    };
+
+    return _getToken(refreshParams, username);
+}
+
+/*
+ * Issue a request towards the OAuth API to obtain an access token
+ */
+function _getToken(params, username) {
+
+    var requestObject = {  
+
+        "url": config.accessTokenURI + "?" + util.stringifyParams(params),
+        "method": "POST"
+    };
+
+    log.info("Sending request " +  JSON.stringify(requestObject));
+    var response = http.request(requestObject);
+    log.info("Received response " +  JSON.stringify(response));
+    var responseBodyStr = response.body;
+    var responseObj = null;
+    if (response.status == "200") {
+
+        if (response.headers["Content-Type"].indexOf("application/json") > -1) {
+
+            responseObj = JSON.parse(responseBodyStr);
+            if (responseObj.error) {
+                throw responseObj;
+            }
+
+            // retrieve the username who owns this token using the persisted state-username mapping
+            var username = username ? username : _getUsernameFromState(params.state);
+            if (!username) {
+
+                throw {
+
+                    "errorCode": "Inconsistency_Error",
+                    "errorDetail": "Could not find username " + username + " in store or in parameters to store the tokens"
+                };
+            }
+
+            // clean-up the state
+            _cleanupState(params.state);
+            _saveTokens(username, responseObj);            
+            return responseObj;
+        }else {
+
+            throw {
+                "errorCode": "Unexpected_Response",
+                "errorDetail": responseBodyStr
+            }
+        }    
+    }else {
+
+        var errorObj = "";
+        try {
+
+            errorObj = JSON.parse(response.body);
+            errorObj = errorObj.errors;
+        }catch(e) {            
+            errorObj = response.body;
+        };
+
+        throw {
+
+            "errorCode": "Authorization_Failed",
+            "errorDetail": errorObj
+        };
+    }
+}	
+
+function _saveTokens(username, dto) {
+
+    var fields = {
+
+        type: config.TYPE,
+        key: _getDocumentKey(username),
+        username: username
+    };
+
+    for (var key in dto) {      
+        fields[key] = dto[key];
+    }
+
+    var resp = document.save(fields);
+    if (resp.metadata.status == "failure") {        
+
+        log.error("TokenManager._saveTokens:\n" + JSON.stringify(resp));
+        throw resp;
+    }
+}
+
+function _getDocumentKey(username) {
+    return util.getTokenDocumentKey(username);
+}
+
+function _getUsernameFromState(state){
+
+    var resp = document.get(util.getStateDocumentKey(state));
+    if (resp.result.key){
+        return resp.result.username;
+    }
+
+    throw {
+        errorCode: "NO_USERNAME_FOUND_FOR_STATE",
+        errorDetail: "Could not load username from state:\n" + JSON.stringify(resp)
+    };
+}
+
+function _cleanupState(state) {
+
+    try {
+        document.delete(util.getStateDocumentKey(state));
+    }catch(exception) {
+        log.warn("Could not cleanup state:\n" + JSON.stringify(exception));
+    }
+}

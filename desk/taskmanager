@@ -1,0 +1,131 @@
+var config = require("../config");
+var taskmodule = require("./task");
+
+const API_TYPE = "desk_";
+const API_PREFIX = "api_prefix";
+const API_VER = "api_ver";
+
+/** 
+ * Provide CRUD operations on tickets
+ * @class TicketManager
+ * @constructor TicketManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: targeted organization's id
+ * @param {Object} [dto.client]: instance of Client
+ */
+function TaskManager(dto) {
+
+    if (!dto || !dto.orgId || !dto.client) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "TaskManager: dto.client and dto.orgId have to be provided"
+        };
+    }
+
+    this.orgId = dto.orgId;
+    this.client = dto.client;
+}
+
+/**
+ * @method listTasks
+ * @param {Object} [filters]: optional filters
+ * @param {Number} [filters.from]: index starting from which the tasks must be listed
+ * @param {Number} [filters.limit]: max number of tickets to fetch
+ * @param {Number} [filters.departmentId]: id of the related organizational division from which the tickets must be fetched
+ * @param {Number} [filters.viewId]: id of the view (customized display of help desk data) to apply while fetching the resources
+ * @param {String} [filters.sortBy]: sort by a specific attribute: "dueDate" or "recentThread". Prefixing with "-" sorts in descending order
+ * @param {String} [filters.include]: key that returns additional information related to a ticket. One off: contacts, products, and assignee.
+ * multiples separated values are allowed
+ * @return {Array} array of tasks data
+ * @throw {Error}
+ */
+TaskManager.prototype.listTasks = function(filters) {
+
+    var requestParams = {
+        
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tasks",
+        headers: {
+            orgId: this.orgId
+        }       
+    };
+
+    if (filters){
+        requestParams.params = filters;
+    }
+
+    var resp = this.client.callApi(requestParams);    
+    if (resp.data){        
+        return resp.data;        
+    }
+    
+    return [];
+};
+
+/**
+ * @method createTask
+ * @param {Object} data: task data, such as: "subject", "departmentId", "dueDate" (e.g. "2016-07-21T16:16:16.000Z"), "category",
+ * "priority" (e.g. "High"), "status" (e.g. "In Progress", "Not Started", "Started", "In Progress", "Deferred", "Completed"), "ownerId", "description"
+ * NOTE: subject and departmentId are mandatory
+ * @return {Object} instance of Task
+ * @throws {Error}
+ */
+TaskManager.prototype.createTask = function(data) {
+
+    if (!data || !data.subject || !data.departmentId) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "TaskManager.createTask: data.contactId and data.departmentId have to be provided"
+        };
+    }
+   
+    var requestParams = {
+        
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tasks",
+        headers: {
+            orgId: this.orgId
+        },
+        method: "POST",
+        params: data
+    };
+    
+    var taskData = this.client.callApi(requestParams);
+    return new taskmodule.Task({data:taskData, client:this.client, orgId: this.orgId});
+};
+
+/**
+ * @method getTask
+ * @param {String} id: the task id,
+ * @param {Array} include: an optional array of field names that will be queries and included in the result
+ * @return {Object} instance of Task
+ * @throws {Error}
+ */
+TaskManager.prototype.getTask = function(id, include) {
+
+    if (!id) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "TaskManager.getTask: id has to be provided"
+        };
+    }
+   
+    var requestParams = {
+        
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/tasks/" + id,
+        headers: {
+            orgId: this.orgId
+        }
+    };
+    
+    if (include) {
+        requestParams.include = include.toString();
+    }
+    
+    var taskData = this.client.callApi(requestParams);
+    return new taskmodule.Task({data:taskData, client:this.client, orgId: this.orgId});
+};

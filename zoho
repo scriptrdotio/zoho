@@ -1,0 +1,129 @@
+var clientModule = require("./client");
+var ticketmanagerModule = require("./desk/ticketmanager");
+var organizationmanagerModule = require("./desk/organizationmanager");
+var taskManagerModule = require("./desk/taskmanager");
+var leadManagerModule = require("./crm/leadmanager");
+var crmContactManagerModule = require("./crm/contactmanager");
+var deskContactManagerModule = require("./desk/contactmanager");
+
+/**
+ * Main entry point to the Zoho connector. Use instances of this class as factories to obtain
+ * instances of the other main classes (managers)
+ * @class Zoho
+ * @constructor
+ * @param {Object} [dto]
+ * @param {String} [dto.username]: the username of whom credentials (access_token) will be used when invoking Zoho's API
+ * @param {String} [dto.defaultOrgId]: an organization id that will be used by default by TicketManager and TaskManager if none specified
+ */
+function Zoho(dto) {
+
+    if (!dto || !dto.username) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "dto.username has to be provided"
+        };
+    }
+
+    if (dto.defaultOrgId) {
+        this.defaultOrgId = dto.defaultOrgId;
+    }
+
+    this.client = new clientModule.Client({username:dto.username, orgId:dto.orgId});
+}
+
+/**
+ * @method getTicketManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: optional organization id, if not provided will try to used default org id if available
+ */
+Zoho.prototype.getTicketManager = function(dto) {
+
+    var orgId = dto.orgId ? dto.orgId : this.defaultOrgId;
+    if (!this.ticketManager) {
+        this.ticketManager = new ticketmanagerModule.TicketManager({orgId: orgId, client: this.client});
+    }
+
+    return this.ticketManager;
+};
+
+/**
+ * @method getOrganizationManager
+ * @param {Object} [dto]
+ */
+Zoho.prototype.getOrganizationManager = function(dto) {
+
+    var orgId = dto && dto.orgId ? dto.orgId : this.defaultOrgId;
+    if (!this.organizationManager) {
+        this.organizationManager = new organizationmanagerModule.OrganizationManager({client: this.client});
+    }
+
+    return this.organizationManager;
+};
+
+/**
+ * @method getTaskManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: optional organization id, if not provided will try to used default org id if available
+ */
+Zoho.prototype.getTaskManager = function(dto) {
+
+    var orgId = dto && dto.orgId ? dto.orgId : this.defaultOrgId;
+    if (!this.taskManager) {
+        this.taskManager = new taskManagerModule.TaskManager({orgId: orgId, client: this.client});
+    }
+
+    return this.taskManager;
+};
+
+/**
+ * @method getLeadManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: optional organization id, if not provided will try to used default org id if available
+ */
+Zoho.prototype.getLeadManager = function(dto) {
+
+    var orgId = dto && dto.orgId ? dto.orgId : this.defaultOrgId;
+    if (!this.leadManager) {
+        this.leadManager = new leadManagerModule.LeadManager({orgId: orgId, client: this.client});
+    }
+
+    return this.leadManager;
+};
+
+/**
+ * @method getContactManager
+ * @param {Object} [dto]
+ * @param {String} [dto.domain]: one of "desk" or "crm". Defaults to CRM.
+ * @param {String} [dto.orgId]: optional organization id, if not provided will try to used default org id if available
+ * @return {Object} instance of desk/contactmanager or crm/contactmanager depending on the domain
+ */
+Zoho.prototype.getContactManager = function(dto) {
+
+    var orgId = dto && dto.orgId ? dto.orgId : this.defaultOrgId;
+    var domain = dto && dto.domain ? dto.domain : "desk";
+    switch(domain) {
+        case "desk": {
+
+            if (!this.deskContactManager) {
+                this.deskContactManager = new deskContactManagerModule.ContactManager({orgId: orgId, client: this.client});               
+            }
+
+            return this.deskContactManager;
+        }
+        case "crm": {
+
+            if (!this.crmContactManager) {
+                this.crmContactManager = new deskContactManagerModule.ContactManager({orgId: orgId, client: this.client});               
+            }
+
+            return this.crmontactManager;
+        }
+        default: throw {
+
+            error: "Unsupported_Domain",
+            errorDetails: dto.doamin + " is not supported"
+        }
+    }
+};

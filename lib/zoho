@@ -1,149 +1,214 @@
 var config =  require("../config");
-var client = require("./client");
+var zohoModule = require("../zoho");
 
+const USER = "test"; // Replace this with the name of a user for whom you have generated an access_token or pass the user within configuration param
+const LIMIT = 100; // default number of results per page
+
+/**
+ * Backward compatible zoho class
+ * @class zoho
+ * @constructor
+ * @param {Object} config
+ */
 function zoho(configuration){
+
     if(configuration){
-        config = configuration
+        this.config = configuration
+    }else {
+        this.config = config;
     }
+
+    this.user = this.config.user ? this.config.user : USER;
+    this.zoho =  new zohoModule.Zoho({username:this.user});
+
+    this.organizationManager = this.zoho.getOrganizationManager();
+    this.organization = this.organizationManager.findOrganizationByFieldName(this.config.portal, "portalName");
+    this.ticketManager = this.zoho.getTicketManager({orgId:this.organization.id});
+    this.contactManager = this.zoho.getContactManager({orgId:this.organization.id}, "desk"); 
+    this.leadManager = this.zoho.getLeadManager({orgId:this.organization.id});
 }
 
-
+/**
+ * @method updateTicketStatus
+ * @param {String} id: ticket id
+ * @param {String} status: new status
+ * @param {String} department name
+ * @throws {Error}
+ */
 zoho.prototype.updateTicketStatus = function(id, status, department){
-   if(!department){
-   	   department = config.department;
-   }
-  
-   if(!status){
-     return {
-       status:"failure",
-       errorDetail : "Missing parameters."
-     }
-   }
-  
-    var xmlTicket = '<requests><row no="1">'+
-         				 '<fl val="Status">' + status +'</fl>'+
-          			'</row></requests>';	
- 
-  	var portal = config.portal;
-      var params= {
-      "authtoken": config.supportAuthToken,
-      "xml": xmlTicket,
-      "portal":portal,
-      "department":department,
-      "id":id
+
+    if(!status){
+
+        return {
+
+            status:"failure",
+            errorDetail : "Missing parameters."
+        }
     }
-    var url = 'https://support.zoho.com/api/json/requests/updaterecords';
-    return client.callApi(url,params);
+
+    var ticketManager = zoho.getTicketManager({orgId:this.organization.id});
+    if(!department){
+        department = this.config.department;
+    }
+
+    var departmentId = this.organization.findDepartmentByFieldName(this.organizationManager.id, department, "name");    
+    var data = {
+
+        status: status,
+        departmentId: departmentId
+    };
+
+    return ticketManager.updateTicket(id, data);
 }
 
+/**
+ * @method createTicket
+ */
 zoho.prototype.createTicket = function(contactName, contactEmail, subject, message, deviceId, status, department){
-   if(!department){
-   	   department = config.department;
-   }
-   
-   if(!deviceId || !deviceId.trim().length){
-   	deviceId = department;
-   }
-    var xmlTicket = this._buildXMLTicketRow(contactName, contactEmail, subject, message, deviceId, status);
-  
-	var portal = config.portal;
-    
-    var params= {
-      "authtoken": config.supportAuthToken,
-      "xml": xmlTicket,
-      "portal":portal,
-      "department":department
+
+    if(!department){
+        department = this.config.department;
     }
-    var url = 'https://support.zoho.com/api/json/requests/addrecords';
 
-  
-
-    return client.callApi(url,params);
- };
-  
-zoho.prototype.createLead = function(name,email, source){
-  
-    var xmlData = this._buildLeadRow(name,email, source);
-    var params= {
-        'wfTrigger':'true',
-        'authtoken': config.crmAuthToken,
-        'xmlData': xmlData,
-        'scope':'crmapi',
-        'newFormat':'1',
-        'duplicateCheck':'2'
+    if(!deviceId || !deviceId.trim().length){
+        deviceId = department;
     }
-    var url =  'https://crm.zoho.com/crm/private/json/Leads/insertRecords';
-    return  client.callApi(url,params);
-  };
-  
-  zoho.prototype._buildXMLTicketRow = function(contactName, contactEmail, subject, message, deviceId, status){
-  
-  if(!status){
-    status = "open";
-  }
-  
-  contactName = this.encodeHTML(contactName);
-  subject = this.encodeHTML(subject);
-  deviceId = this.encodeHTML(deviceId);
-  contactEmail= this.encodeHTML(contactEmail);
-  message= this.encodeHTML(message);
-  status = this.encodeHTML(status);
 
-  return '<requests><row no="1">'+
-    '<fl val="Subject">'+ subject + '</fl>'+
-    '<fl val="Contact Name">' + contactName + '</fl>'+
-    '<fl val="Product Name">'+ deviceId +'</fl>'+
-    '<fl val="Email">' + contactEmail + '</fl>'+
-    '<fl val="Description">' + message +'</fl>'+
-    '<fl val="Status">' + status +'</fl>'+
-    '</row></requests>';	
+    if(!status){
+        status = "open";
+    }
 
- };
+    // get department id from department name
+    var departmentId = this.organizationManager.findDepartmentByFieldName(this.organization.id, department, "name").id;   
 
-zoho.prototype.encodeHTML = function (str) { 
-if (!str) {
- return "";
-}
-  return str.replace(/&/g, '&amp;') .replace(/</g, '&lt;') .replace(/>/g, '&gt;') .replace(/"/g, '&quot;') .replace(/'/g, '&apos;'); }
-;
-  
-zoho.prototype._buildLeadRow = function(name, frmEmail, source){
-  
-  name = this.encodeHTML(name);
-  frmEmail = this.encodeHTML(frmEmail);
-  source = this.encodeHTML(source);
-  return '<Leads><row no="1">'+
-    '<FL val="Last Name">' + name + '</FL>'+
-    '<FL val="Lead Source">'+source+'</FL>'+
-    '<FL val="Email">' + frmEmail + '</FL>'+
-    '</row></Leads>';	
+    // get contact id from contact email. We assume that email is unique per contact
+    var contact = null;
+    var contactList = this.contactManager.searchContactsByFieldValue(contactEmail, "email");
+    if (!contactList.data || contactList.data.length == 0) {
+
+        throw {
+
+            errorCode: "Entity_Not_Found",
+            errorDetail: "zoho.createTicket: cannot find a contact with the following email " + contactEmail
+        };
+    }
+
+    var data = {
+
+        contactId: contactList.data[0].id,
+        email: contactEmail,
+        // To date (2018/09/19) the new Zoho desk API does not support search by product Id/ product Name, whereas it the former version did
+        // We are adding the device Id to the subject, as a hack to maintain backard compatibility with our preceding version of the connector
+        subject: deviceId + ", " + subject, 
+        description: message,
+        customFields: {
+            deviceId: deviceId
+        },
+        status: status,
+        departmentId: departmentId
+    };
+
+    return this.ticketManager.createTicket(data);
 };
-  
+
+/**
+ * @method createLead
+ */
+zoho.prototype.createLead = function(name, email, source){
+
+    // check if name is actually first name + last name, if so, split it, otherwise use it as last name
+    var firstName = "";
+    var lastName = "";
+    var nameSplit = name.split(" ");
+    if (nameSplit.length > 0) {
+
+        firstName = nameSplit[0];
+        lastName = nameSplit[1];
+    }else {
+        lastName = name;
+    }
+
+    var leadData = {
+
+        "First_Name": firstName,
+        "Last_Name": lastName,
+        "Email": email,
+        "Lead source": source,
+        "DuplicateCheck": "2"
+    };
+
+    return this.leadManager.createLeads(leadData);
+};
+
+/*
+ * @method getrecordsbysearch
+ */
 zoho.prototype.getrecordsbysearch = function(fieldName, fieldValue, department, fromindex, toindex){
-     if(!department){
-       department = config.department
-     }
-  var url ="https://support.zoho.com/api/json/requests/getrecordsbysearch";
 
-     
-  var url ="https://support.zoho.com/api/json/requests/getrecordsbysearch?authtoken="+ config.supportAuthToken +"&portal="+ config.portal+ "&department="+ department +"&searchfield="+ encodeURIComponent(fieldName) +"&searchvalue="  +encodeURIComponent(fieldValue)+"&selectfields="+encodeURIComponent("Requests(created Time,status,Account Name,ACCOUNTID,Request Id,Ticket Id,Subject,Description,Phone,Email,Contact Name,CONTACTID,Department,DEP_ID");
-  
-  url += (fromindex != null && typeof fromindex != 'undefined') ? "&fromindex=" +fromindex : "";
-  url += (toindex != null && typeof toindex != 'undefined') ? "&toindex=" +toindex : "";
+    var toReplaceWithSubject = ["Product Name", "Product Id", "productName", "productId"];
+    
+    if(!department){
+        department = this.config.department
+    }
 
-  return  client.callApi(url,{});
+    // get department id from department name
+    var departmentId = this.organizationManager.findDepartmentByFieldName(this.organization.id, department, "name").id;       
+    var params = {
+
+        from: toindex ? toindex : 0,
+        limit: toindex && fromindex ? toindex - fromindex : LIMIT, 
+        departmentId: departmentId
+    };
+
+    if (toReplaceWithSubject.indexOf(fieldName) > -1) { // use the subject as a hack for lack of support for searching by some fields
+        
+        fieldName = "subject";
+        fieldValue += "*"; 
+    }
+    
+    params[fieldName] = fieldValue;    
+    var ticketList = this.ticketManager.searchTicketsByFields(params); 
+	var list = this._convertToLegacyStructure(ticketList.data);
+    return list;
 };
 
- zoho.prototype.getrecords = function(fieldName, fieldValue, department){
-   if(!department){
-     department = config.department
-   }
-   var url ="https://support.zoho.com/api/json/requests/getrecords"
-   var params = {
-     "authtoken":config.supportAuthToken,
-     "portal":config.portal,
-     "department":department,
-   }
+zoho.prototype._convertToLegacyStructure = function(ticketList) {
+    
+    // convert to legacy data structure
+    var list = [];
+    for (var i = 0; i < ticketList.length; i++) {
+        
+        var obj = {}
+        for (var key in ticketList[i]) { 
+            
+            var name = key;
+            switch(key) {
+                    
+                case "ticketNumber": name = "caseId";break;
+                case "createdTime": name = "creationDate";break;
+                case "webUrl": name = "uri";break;
+                case "subject": ticketList[i][key] = ticketList[i][key].substring(ticketList[i][key].indexOf(","));
+            }
+            
+            obj[name] = ticketList[i][key];      
+        }       
+        
+        list.push(obj);
+    }
+    
+    return list;
+};
+
+zoho.prototype.getrecords = function(fieldName, fieldValue, department){
+    if(!department){
+        department = config.department
+    }
+    var url ="https://support.zoho.com/api/json/requests/getrecords"
+    var params = {
+        "authtoken":config.supportAuthToken,
+        "portal":config.portal,
+        "department":department,
+    }
 
     return  client.callApi(url,params);
 };

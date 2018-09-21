@@ -1,0 +1,18 @@
+function Organization(dto) {
+    
+    if (!dto || !dto.data || !dto.client || !dto.orgId) {        
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "Organization: dto.data, dto.client and dto.orgId have to be provided"
+        };
+    }
+    
+    for (var key in dto.data) {
+        this[key] = dto.data[key];
+    }
+
+    this.orgId = dto.orgId;
+    this.client = dto.client;
+}

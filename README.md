@@ -1,32 +1,45 @@
-# Scriptr Zoho Module
-[Zoho](http://www.zoho.com "Zoho") is a CRM and Support as a service platform. 
-## Purpose of the scriptr zoho module
-This module allows you access to zoho support APIs from scriptr.io, by providing you with a few apis that you can directly call from your own scriptr application. 
-For example, using the information about the speed of a vehicle and its oil level, you can create zoho ticket based on the threshold rules for speed and oil you have defined in your application, you can also list all the tickets of the vehicle, as well as update the status of those tickets.
+# About this connector 
+This is the second version of the connector for [Zoho](https://www.zoho.com). It wraps part of the CRM and DESK API exposed by zoho with full JavaScript objects that can be directly used from within your scripts in scriptr.io.
 
-## Configuring Zoho Module
+The first version is still accessible in [branch v1](https://github.com/scriptrdotio/zoho/tree/v1) of this repository
 
-### Zoho account settings
-When creating a Zoho Support account, you will have to specify your organization name, which Zoho uses to automatically create a "portal" and a "department".
-Hence, if your chose "acme" as an organization name, your default portal and default department will be named "acme" as well.
+# How to use
+Check the [/test/tests](./test/tests) that contains many usage scenarios.
 
-Note: if you wish to create more portals and departments, you can do this from the setup page
+# How to configure
+The /config script contains some variables used to configure the connector. In normal circumstances, you only need to specify/change the values of the following: client_id, client_secret and redirect_uri. 
 
-From the "Access Settings" section of your Zoho setup page, make sure to associate a department to your portal
+Before you do that, make sure to create a zoho application using zoho's [developer console] (https://accounts.zoho.com/developerconsole). Note that the "Authorized redirect URIs" field should point to the /oauth/getAccessToken script of your zoho deployment (in your scriptr.io IDE) and must be prefixed with a valid scriptr.io auth token. Example:
+```
+// the token used in the below is for illustration purposes only
+https://api.scriptrapps.io/zoho/oauth/getAccessToken?auth_token=UlIxQMgwRjc3Njl6b9hvXeNvnm5lL3RvckpCDDA1Qjc1RTlBOTA0NEJFMUVBQjcxRkY0ATcxMlc1Nw== 
+```
+Once done creating the zoho app in zoho's developer console, copy/paste the values of the client_id, client_secret and authorized url respectively into the client_id, client_secret and redirect_uri variables of the config file of the connector.
 
-### Authentication token
-In order to get access to your Zoho account, you have to generate an access token.
-if you are signed in to Zoho, you can obtain a token by sending a request to the following url: https://accounts.zoho.com/apiauthtoken/create?SCOPE=ZohoSupport/supportapi,ZohoSearch/SearchAPI
+*Note:* to obtain a scriptr.io auth token, click on your username in the [scriptr.io workspace](https://www.scriptr.io/workspace), then click on "Device directory". Create a device or use an existing one then just copy the generated token.
 
-If you are not signed in to Zoho, you can add your email and password to the above request as in the below example
+# How to generate an access token from zoho
+You can do this manually using the following steps (or you can automate the process using the same scripts):
 
-Example of a request to generate a zoho token: 
-`https://accounts.zoho.com/apiauthtoken/nb/create?SCOPE=ZohoSupport/supportapi,ZohoSearch/SearchAPI&EMAIL_ID=your_username&PASSWORD=application_password`
-If you don't send EMAIL_ID and PASSWORD you will be redirected to the Zoho login page.
+- *Step1*: send an authorization grant request by executing the /oauth/getAuthorizationGrant script. Make sure to pass "username=<some_username>" as a query parameter. As a result, you will obtain the URL of the zoho access grant form.
+- *Step2*: Open the URL in a browser. Sign-in to zoho and grant the requested permissions. The browser will redirect to the /oauth/getAccessToken script, which will persist the resulting access_token and refresh_token for the provided username.
 
-### Zoho Module Config
-Once you have a token, update the "zoho/config" file in your scriptr.io workspace, as follows:
+Starting from there, the zoho connector will automatically refresh the token using the obtained refresh_token.
 
-Set the value of "supportAuthToken" to the Zoho token you generated,
-Set the value of "portal" to the name of the portal you created in Zoho (by default, use the name of your organization)
-Set the value of "department" to the name of the department you created in zoho and associated to the portal (by default, use the name of your organization)
+# Backward compatibility
+This version of the connector maintains backward compatibility with the [former version](https://github.com/scriptrdotio/zoho/tree/v1). Any scriptr.io application that was using this latter needs to replace the zoho connector with the new one. The legacy pathes and script names are kept the same. The only required changes are the following:
+
+In the /config file, fill the "user" variable of the "Backward compatibility variables" section with a username for which you already have obtained an access token from zoho (see "How to generate an access token from zoho"). Alternatively, you can specify the user when creating an instance of the zoho compatibility class
+
+Example:
+```
+var zohoCompatibilityModule = require("/modules/zoho/lib/zoho"); // we assume that the zoho connector is deployed in /modules/zoho
+var config = {
+        
+   user: "username_with_access_token", // you should now pass a username for which you have an access_token
+   portal: "your_portal_name",
+   department: "your_department_name"
+};
+    
+var legacyZoho = new zohoCompatibilityModule.zoho(config);
+```

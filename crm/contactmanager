@@ -1,0 +1,92 @@
+var config = require("../config");
+
+const API_TYPE = "crm_";
+const API_PREFIX = "api_prefix";
+const API_VER = "api_ver";
+
+/**
+ * Manages Zoho CRM contacts
+ * @class ContactManager
+ * @constructor ContactManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: targeted organization's id
+ * @param {Object} [dto.client]: instance of Client
+ */
+function ContactManager(dto) {
+
+    if (!dto || !dto.orgId || !dto.client) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "ContactManager: dto.client and dto.orgId have to be provided"
+        };
+    }
+
+    this.orgId = dto.orgId;
+    this.client = dto.client;
+}
+
+/**
+ * @method listContacts
+ * @param {Object} [filter]: optional filters
+ * @param {Number} [filters.include]: fields to include into the response
+ * @param {Number} [filters.from]: return result strating from this index
+ * @param {Number} [filters.limit]: number of results to return per call 
+ * @param {Number} [filters.viewId]: ID of the view to apply while fetching the resources
+ * @param {String} [filters.sortBy]: field name to sort the results by
+ * @return {Object} {"data": array of leads data, "info": {"per_page": total leads per page, "count": total leads, "page": returned page index, "more_records": true/false}
+ * @throw {Error}
+ */
+ContactManager.prototype.listContacts = function(filters) {
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/contacts",
+        headers: {
+            orgId: this.orgId
+        }
+    };
+
+    if (filters) {
+        requestParams.params = filters;
+    }
+
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method searchContactsByFieldValue
+ * @param {String} fiedlValue: the value of the field to map 
+ * @param {String} fieldName: the field used to search
+ * @param {Object} [filter]: optional filters
+ * @param {Number} [filters.page]: index of the page to start from (defaults to 1)
+ * @param {Number} [filters.per_page]: number of results per page
+ * @param {Number} [filters.cvid]: number to get the list of records based on custom views (custom_view_id)
+ * @return {Object} {"data": array of leads data, "info": {"per_page": total leads per page, "count": total leads, "page": returned page index, "more_records": true/false}
+ * @throw {Error}
+ */
+ContactManager.prototype.searchContactsByFieldValue = function(fieldValue, fieldName, filters) {
+
+    if (!fieldName || !fieldValue) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "ContactManager.searchContactsByFieldValue: fieldName and fieldValue have to be provided"
+        };
+    }
+
+    var params = filters ? filters : {};
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Contacts/search",
+        headers: {
+            orgId: this.orgId
+        },
+        params: params
+    };
+
+    requestParams.params[fieldName] = fieldValue;
+    return this.client.callApi(requestParams);
+};

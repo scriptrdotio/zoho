@@ -1,0 +1,149 @@
+var config = require("../config");
+
+const API_TYPE = "desk_";
+const API_PREFIX = "api_prefix";
+const API_VER = "api_ver";
+const MAX_DPT = 200;
+
+/** 
+ * Provide CRUD operations on organizations and departments
+ * @class OrganizationManager
+ * @constructor OrganizationManager
+ * @param {Object} [dto]
+ * @param {Object} [dto.client]: instance of Client
+ */
+function OrganizationManager(dto) {
+    
+    if (!dto || !dto.client) {
+        
+         throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "OrganizationManager: dto.client has to be provided"
+        };
+    }
+    
+    this.client = dto.client;
+}
+
+/**
+ * @method listOrganizations
+ * @return {Object} array of Organization
+ * @throw {Error}
+ */
+OrganizationManager.prototype.listOrganizations = function() {
+  
+    var requestParams = {
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/organizations"
+    }
+    
+    return  this.client.callApi(requestParams).data;
+};
+
+/**
+ * @method findOrganizationByFieldName
+ * @param {String} value: value to search for the field
+ * @return {Object} first organization data that matches the input parameter
+ * @throw {Error}
+ */
+OrganizationManager.prototype.findOrganizationByFieldName = function(value, fieldName) {
+  
+    if (!value || !fieldName) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "OrganizationManager.findOrganizationByFieldName: value and fieldName are required"
+        };
+    }
+    
+    var list = this.listOrganizations();
+    var org = null;
+    for (var i = 0; i < list.length && !org; i++){
+        org = list[i][fieldName] == value ? list[i] : null;
+    }
+    
+    if (!org) {
+     
+        throw {
+
+            errorCode: "Entity_Not_Found",
+            errorDetail: "OrganizationManager.findOrganizationByName: cannot find organization with " + fieldName + "=" + value
+        };
+    }
+    
+    return org;
+};
+
+/**
+ * List the departments in a specified organization
+ * @method listDepartments
+ * @param {String} orgId: corresponding 
+ * @param {Object} [filter] optional filters
+ * @param {Boolean} [filter.isEnabled]: filters departments based on their enabled status
+ * @param {Number} [filter.from]: index to start listing from
+ * @param {Number} [filter.limit]: number of departments to fetch per call; default value is 10 and maximum value is 200
+ * @return {Object} array of Departments
+ * @throw {Error}
+ */
+OrganizationManager.prototype.listDepartments = function(orgId, filter) {
+  
+    if (!orgId) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "OrganizationManager.listDepartments: orgId is required"
+        };
+    }
+    
+    var requestParams = {
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/departments",
+        headers:{
+            orgId: orgId
+        }
+    }
+    
+    if (filter) {
+        requestParams.params = filter;
+    }
+    
+    return  this.client.callApi(requestParams).data;
+};
+
+/**
+ * Limited to 200 departments
+ * @method findDepartmentByFieldName
+ * @param {String} orgId: corresponding 
+ * @param {String} value: value to search for the field
+ * @return {Object} first department data that matches the input parameter
+ * @throw {Error}
+ */
+OrganizationManager.prototype.findDepartmentByFieldName = function(orgId, value, fieldName) {
+  
+    if (!value || !fieldName) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "OrganizationManager.findDepartmentByFieldName: value and fieldName are required"
+        };
+    }
+    
+    var list = this.listDepartments(orgId, {limit:MAX_DPT}); 
+    var dept = null;
+    for (var i = 0; i < list.length && !dept; i++){
+        dept = list[i][fieldName] == value ? list[i] : null;
+    }
+    
+    if (!dept) {
+     
+        throw {
+
+            errorCode: "Entity_Not_Found",
+            errorDetail: "OrganizationManager.findDepartmentByFieldName: cannot find department with " + fieldName + "=" + value
+        };
+    }
+    
+    return dept;
+};

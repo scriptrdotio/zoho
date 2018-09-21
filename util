@@ -1,0 +1,56 @@
+var config = require("./config");
+
+/*
+ * generate a random state to be used in the oauth 2 process' steps
+ */ 
+function getState() {
+  return ('xxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+  }));
+};
+
+/*
+ * Turns dots in the username into "_dot_" to avoid problems when persisting the username as a property key
+ */
+function toStorableUserName(username) {
+    
+    var modified = username.replace(/\./g, "_dot_");
+    modified = modified.replace(/\@/g, "_at_");
+    return modified;
+
+};
+
+/*
+ * Turns "_dot_" in the username into "." 
+ */
+function fromStorableUserName(username) {
+    
+    var modified = username.replace(/_dot_/g, ".");
+    modified = modified.replace(/_at_/g, "@");
+    return modified;
+};
+
+/*
+ * Create a key to save the sate of a user's authorization grant request
+ */
+function getStateDocumentKey(state) {
+  return config.app_name + "_state_" + state;
+}
+
+/*
+ *
+ */
+function getTokenDocumentKey(username) {
+    return config.TYPE + "_" + toStorableUserName(username) + "_" + config.app_name + "_" + toStorableUserName(username);
+}
+
+function stringifyParams(params) {
+    
+    var paramstr = "";
+    for(var key in params){
+        paramstr += (key + "=" + encodeURIComponent(params[key]) + "&");
+    }
+    
+    return paramstr.substring(0, paramstr.length - 1);
+}
