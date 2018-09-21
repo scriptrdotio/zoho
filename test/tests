@@ -115,7 +115,7 @@ try {
     //task = taskManager.createTask({subject:"work to do", departmentId: validDptId, description: "some additional stuff", status: "Started"});
 
     /* List all tasks */
-    //var taskList = taskManager.listTasks(); return taskList;
+    //var taskList = taskManager.listTasks(); 
 
     /* Get a task by id */
     //task = taskManager.getTask(taskList[0].id);
@@ -150,7 +150,7 @@ try {
     */
     
     /* list leads with no filters*/
-    var leadList = leadManager.listLeads();
+    //var leadList = leadManager.listLeads();
     
     /*
      * Manage zoho desk contacts
