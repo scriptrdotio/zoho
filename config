@@ -26,7 +26,7 @@ var client_id = "<your_zoho_app_client_id>";	//Client ID generated after registe
 var client_secret = "<your_zoho_app_client_secret>"; //Client secret generated after registering the app
 
 // Redirect URI mentioned while registering the client. Should refer to getAuthorizationToken
-var redirect_uri = "https://api.scriptrapps.io/zoho/oauth/getAccessToken?auth_token=<use_a_valid_scriptr.io_auth_token>"; 
+var redirect_uri = "https://api.scriptrapps.io/<zoho_installation_path_in_scriptr.io>/oauth/getAccessToken?auth_token=<use_a_valid_scriptr.io_auth_token>"; 
 
  // The various scopes associated with Zoho Desk for tickets and tasks management
 var scope = "Desk.tickets.READ,Desk.tickets.WRITE,Desk.basic.READ,Desk.basic.WRITE,Desk.tasks.READ,Desk.tasks.WRITE,ZohoCRM.modules.leads.ALL,ZohoCRM.modules.contacts.READ,Desk.contacts.READ,Desk.search.READ,ZohoCRM.modules.Cases.ALL";
