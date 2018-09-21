@@ -9,7 +9,7 @@ Check the [/test/tests](./test/tests) that contains many usage scenarios.
 # How to configure
 The /config script contains some variables used to configure the connector. In normal circumstances, you only need to specify/change the values of the following: client_id, client_secret and redirect_uri. 
 
-Before you do that, make sure to create a zoho application using zoho's [developer console] (https://accounts.zoho.com/developerconsole). Note that the "Authorized redirect URIs" field should point to the /oauth/getAccessToken script of your zoho deployment (in your scriptr.io IDE) and must be prefixed with a valid scriptr.io auth token. Example:
+Before you do that, make sure to create a zoho application using zoho's [developer console](https://accounts.zoho.com/developerconsole). Note that the "Authorized redirect URIs" field should point to the /oauth/getAccessToken script of your zoho deployment (in your scriptr.io IDE) and must be prefixed with a valid scriptr.io auth token. Example:
 ```
 // the token used in the below is for illustration purposes only
 https://api.scriptrapps.io/zoho/oauth/getAccessToken?auth_token=UlIxQMgwRjc3Njl6b9hvXeNvnm5lL3RvckpCDDA1Qjc1RTlBOTA0NEJFMUVBQjcxRkY0ATcxMlc1Nw== 
