@@ -181,7 +181,7 @@ TicketManager.prototype.createTicket = function(data) {
  * @return {Object} updated data
  * @throw {Error}
  */
-TicketManager.prototype.updateTicket = function(data) {
+TicketManager.prototype.updateTicket = function(id, data) {
 
     if (!id || !data) {
         
