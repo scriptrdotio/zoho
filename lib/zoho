@@ -37,7 +37,7 @@ function zoho(configuration){
  */
 zoho.prototype.updateTicketStatus = function(id, status, department){
 
-    if(!status){
+   if(!status){
 
         return {
 
@@ -46,19 +46,18 @@ zoho.prototype.updateTicketStatus = function(id, status, department){
         }
     }
 
-    var ticketManager = zoho.getTicketManager({orgId:this.organization.id});
     if(!department){
         department = this.config.department;
     }
 
-    var departmentId = this.organization.findDepartmentByFieldName(this.organizationManager.id, department, "name");    
+    var departmentId = this.organizationManager.findDepartmentByFieldName(this.organization.id, department, "name").id;      
     var data = {
 
         status: status,
         departmentId: departmentId
     };
 
-    return ticketManager.updateTicket(id, data);
+    return this.ticketManager.updateTicket(id, data);
 }
 
 /**
