@@ -42,7 +42,7 @@ zoho.prototype.updateTicketStatus = function(id, status, department){
         return {
 
             status:"failure",
-            errorDetail : "Missing parameters."
+            errorDetail : "lib/zoho.updateTicketStatus: Missing parameters."
         }
     }
 
@@ -89,7 +89,7 @@ zoho.prototype.createTicket = function(contactName, contactEmail, subject, messa
         throw {
 
             errorCode: "Entity_Not_Found",
-            errorDetail: "zoho.createTicket: cannot find a contact with the following email " + contactEmail
+            errorDetail: "/lib/zoho.createTicket: cannot find a contact with the following email " + contactEmail
         };
     }
 
@@ -168,7 +168,7 @@ zoho.prototype.getrecordsbysearch = function(fieldName, fieldValue, department, 
     
     params[fieldName] = fieldValue;    
     var ticketList = this.ticketManager.searchTicketsByFields(params); 
-	var list = this._convertToLegacyStructure(ticketList.data);
+    var list = this._convertToLegacyStructure(ticketList.data);
     return list;
 };
 
