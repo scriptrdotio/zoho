@@ -186,7 +186,7 @@ zoho.prototype._convertToLegacyStructure = function(ticketList) {
                 case "ticketNumber": name = "caseId";break;
                 case "createdTime": name = "creationDate";break;
                 case "webUrl": name = "uri";break;
-                case "subject": ticketList[i][key] = ticketList[i][key].substring(ticketList[i][key].indexOf(","));
+                case "subject": ticketList[i][key] = ticketList[i][key].substring(ticketList[i][key].indexOf(",") + 1);
             }
             
             obj[name] = ticketList[i][key];      
