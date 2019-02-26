@@ -195,7 +195,10 @@ zoho.prototype._convertToLegacyStructure = function(ticketList) {
         list.push(obj);
     }
     
-    return list;
+    return {
+        documents: list,
+        count: list.length
+    }
 };
 
 zoho.prototype.getrecords = function(fieldName, fieldValue, department){
