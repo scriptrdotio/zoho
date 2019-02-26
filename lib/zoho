@@ -42,7 +42,7 @@ zoho.prototype.updateTicketStatus = function(id, status, department){
         return {
 
             status:"failure",
-            errorDetail : "lib/zoho.updateTicketStatus: Missing parameters."
+            errorDetail : "lib/zoho.updateTicketStatus: Missing parameter - status."
         }
     }
 
