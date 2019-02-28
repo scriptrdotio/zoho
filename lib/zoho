@@ -22,7 +22,7 @@ function zoho(configuration){
     this.zoho =  new zohoModule.Zoho({username:this.user});
 
     this.organizationManager = this.zoho.getOrganizationManager();
-    this.organization = this.organizationManager.findOrganizationByFieldName(this.config.portal, "portalName");
+    this.organization = this.organizationManager.findOrganizationByFieldName(this.config.portal, "portalName", true);
     this.ticketManager = this.zoho.getTicketManager({orgId:this.organization.id});
     this.contactManager = this.zoho.getContactManager({orgId:this.organization.id}, "desk"); 
     this.leadManager = this.zoho.getLeadManager({orgId:this.organization.id});
