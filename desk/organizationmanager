@@ -1,8 +1,12 @@
+var document = require("document");
 var config = require("../config");
+var util = require("../util");
+var log = require("log");
 
 const API_TYPE = "desk_";
 const API_PREFIX = "api_prefix";
 const API_VER = "api_ver";
+const ORGANIZATION_PREFIX = "organization_";
 const MAX_DPT = 200;
 
 /** 
@@ -13,16 +17,16 @@ const MAX_DPT = 200;
  * @param {Object} [dto.client]: instance of Client
  */
 function OrganizationManager(dto) {
-    
+
     if (!dto || !dto.client) {
-        
-         throw {
+
+        throw {
 
             errorCode: "Missing_Parameter",
             errorDetail: "OrganizationManager: dto.client has to be provided"
         };
     }
-    
+
     this.client = dto.client;
 }
 
@@ -32,22 +36,27 @@ function OrganizationManager(dto) {
  * @throw {Error}
  */
 OrganizationManager.prototype.listOrganizations = function() {
-  
+
     var requestParams = {
         url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/organizations"
     }
-    
+
     return  this.client.callApi(requestParams).data;
 };
 
 /**
+ * Finds an organization by field name for the current client.username. Will first try to search in the persistent store unless otherwise specified
+ * of if no organization was found.
  * @method findOrganizationByFieldName
  * @param {String} value: value to search for the field
+ * @param {String} fieldName: the name of field used for the search
+ * @param {boolean} fromStore: optional. If defined and true, tries to load the organization from the scriptr.io storage.
+ * If not found, will issue a call to the remote Zoho API then store the result in scriptr.io's storage.
  * @return {Object} first organization data that matches the input parameter
  * @throw {Error}
  */
-OrganizationManager.prototype.findOrganizationByFieldName = function(value, fieldName) {
-  
+OrganizationManager.prototype.findOrganizationByFieldName = function(value, fieldName, fromStore) {
+
     if (!value || !fieldName) {
 
         throw {
@@ -56,22 +65,39 @@ OrganizationManager.prototype.findOrganizationByFieldName = function(value, fiel
             errorDetail: "OrganizationManager.findOrganizationByFieldName: value and fieldName are required"
         };
     }
-    
-    var list = this.listOrganizations();
+
+    var key = this._buildOrganizationDocKey(value, fieldName);
+    if (fromStore) { 
+
+        var resp = document.get(key); 
+        if (resp.metadata.status == "success") { 
+            return JSON.parse(resp.result.org);
+        }
+    }
+
+    var list = this.listOrganizations(value, fieldName);
     var org = null;
     for (var i = 0; i < list.length && !org; i++){
         org = list[i][fieldName] == value ? list[i] : null;
     }
-    
+
     if (!org) {
-     
+
         throw {
 
             errorCode: "Entity_Not_Found",
             errorDetail: "OrganizationManager.findOrganizationByName: cannot find organization with " + fieldName + "=" + value
         };
     }
-    
+
+    if (fromStore) {
+        
+        var resp = document.save({key: key, org:JSON.stringify(org)});
+        if (resp.metadata.status == "failure"){
+            log.error("OrganizationManager.findOrganizationByFieldName: could not save organization\n " + JSON.stringify(resp));
+        } 
+    }
+
     return org;
 };
 
@@ -87,7 +113,7 @@ OrganizationManager.prototype.findOrganizationByFieldName = function(value, fiel
  * @throw {Error}
  */
 OrganizationManager.prototype.listDepartments = function(orgId, filter) {
-  
+
     if (!orgId) {
 
         throw {
@@ -96,18 +122,18 @@ OrganizationManager.prototype.listDepartments = function(orgId, filter) {
             errorDetail: "OrganizationManager.listDepartments: orgId is required"
         };
     }
-    
+
     var requestParams = {
         url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/departments",
         headers:{
             orgId: orgId
         }
     }
-    
+
     if (filter) {
         requestParams.params = filter;
     }
-    
+
     return  this.client.callApi(requestParams).data;
 };
 
@@ -120,7 +146,7 @@ OrganizationManager.prototype.listDepartments = function(orgId, filter) {
  * @throw {Error}
  */
 OrganizationManager.prototype.findDepartmentByFieldName = function(orgId, value, fieldName) {
-  
+
     if (!value || !fieldName) {
 
         throw {
@@ -129,21 +155,25 @@ OrganizationManager.prototype.findDepartmentByFieldName = function(orgId, value,
             errorDetail: "OrganizationManager.findDepartmentByFieldName: value and fieldName are required"
         };
     }
-    
+
     var list = this.listDepartments(orgId, {limit:MAX_DPT}); 
     var dept = null;
     for (var i = 0; i < list.length && !dept; i++){
         dept = list[i][fieldName] == value ? list[i] : null;
     }
-    
+
     if (!dept) {
-     
+
         throw {
 
             errorCode: "Entity_Not_Found",
             errorDetail: "OrganizationManager.findDepartmentByFieldName: cannot find department with " + fieldName + "=" + value
         };
     }
-    
+
     return dept;
+};
+
+OrganizationManager.prototype._buildOrganizationDocKey = function(value, fieldName) {
+    return ORGANIZATION_PREFIX + "_" + fieldName + "_" + value + "_" + util.toStorableUserName(this.client.username);
 };
