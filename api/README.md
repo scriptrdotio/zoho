@@ -4,3 +4,4 @@ Note that you should not use former authentication technique but rather use OAut
 
 *The scripts in the /lib folder are only meant to be used by applications leveraging the former version of the connector to maintain backward compatibiity. 
 New applications should use /zoho*
+#
