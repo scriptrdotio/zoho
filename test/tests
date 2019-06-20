@@ -4,11 +4,11 @@
 
 var zohoModule = require("../zoho");
 var zohoCompatibilityModule = require("../lib/zoho");
-var username = "MJ"; // replaced
-var orgid = "691174350"; // replaced
+var username = "test"; // replace with valid data
+var orgid = "634062529"; // replace with valid data
 var validDptId = "128390000000006907"; // replace with valid data
 var validContactId = "128390000000093003"; // replace with valid data
-var validPortalName = "mjbassil"; // replace with valid data
+var validPortalName = "scriptrio"; // replace with valid data
 var validDptName = "scriptrio"; // replace with valid data
 var ticketId = "";
 try {
@@ -20,10 +20,11 @@ try {
     var organizationManager = zoho.getOrganizationManager();
 
     /* list all organizations */
-    var organizationList = organizationManager.listOrganizations(); 
+    //var organizationList = organizationManager.listOrganizations(); 
+    
     /* find organization by portal name */
     //var organization = organizationManager.findOrganizationByFieldName(validPortalName, "portalName");
-
+    
     /* list first 50 departments of a given organization */
     //var departmentList = organizationManager.listDepartments(orgid, {limit:50});
     
@@ -38,7 +39,7 @@ try {
     /*var ticketManager = zoho.getTicketManager({orgId:orgid});
 
     var ticketList = []; 
-	*/
+
     /* list tickets sorted by creation time in descending order, limited to 10 results */
     //ticketList = ticketManager.listTickets({limit:10, sortBy:"-createdTime"}); 
 
@@ -114,8 +115,8 @@ try {
     //task = taskManager.createTask({subject:"work to do", departmentId: validDptId, description: "some additional stuff", status: "Started"});
 
     /* List all tasks */
-    var taskList = taskManager.listTasks(); 
-    
+    //var taskList = taskManager.listTasks(); 
+
     /* Get a task by id */
     //task = taskManager.getTask(taskList[0].id);
 
@@ -155,18 +156,66 @@ try {
      * Manage zoho desk contacts
      */
     
-    var contactManager = zoho.getContactManager({orgId:orgid, domain: "desk"});
+    var contactManager = zoho.getContactManager({orgId:orgid, domain: "crm"});
     
     /* search contact by email */
-    //var contact = contactManager.searchContactsByFieldValue("test@scriptr.io", "email").data[0];
+    //var contact = contactManager.searchContactsByFieldValue("krismarrier@gmail.com", "email").data[0];
     
     /* list 10 first contacts */
-    //var contactList = contactManager.listContacts({limit:10}); return contactList
+    //var contactList = contactManager.listContacts(); return contactList
+    
+    /*
+    * Manage zoho crm notes
+    */
+    var noteManager = zoho.getNoteManager({orgId:orgid});
+    var noteModule = "Contacts";
+    var noteModuleID = "4041340000000225197";
+    
+    var notes = [];
+    
+    /* get all available notes */
+    //notes = noteManager.getNotes();
+    
+    /* get Notes from a Specific Record */
+    //notes = noteManager.getNotesFromRecord(noteModule,noteModuleID);
+    
+    var noteData = {
+        "Note_Title": "Contacted",
+        "Note_Content": "Need to do further loloing",
+        "Parent_Id": "4041340000000225197",
+        "se_module": "Contacts"
+    };
+    
+    /* create new note */
+    //var createdNote = noteManager.createNote(noteData);
+    
+    var specificNoteData = {
+        "Note_Title": "Contacted",
+        "Note_Content": "Need to do lala further tracking"
+    };
+    
+    var noteID = "4041340000000244002";
+    var newNoteData = {
+        "Note_Title": "Contacted",
+        "Note_Content": "Tracking done. Happy with the customer"
+    };
+    
+    /* update specific note by id */
+    //var updatedNote = noteManager.updateNote(noteModule,noteModuleID,noteID,newNoteData);
+    
+    /* delete specific note */
+    //var deleteResponse = noteManager.deleteNote(noteModule,noteModuleID,noteID);
+    
+    var noteIDs = ["4041340000000225712","4041340000000243003"];
+    /* delete bulk notes by array of ids */
+    var deletedResponse = noteManager.deleteBulkNotes(noteIDs);
+    return deletedResponse;
+    
     
     /*
      * Test backward compatibility
      */
-    /*var config = {
+    var config = {
         
         user: "test", // in the former version we used to pass an auth token. You should now pass a username for which you have an access_token
         portal: "scriptrio",
@@ -174,7 +223,7 @@ try {
     };
     
     var oldZoho = new zohoCompatibilityModule.zoho(config);
-    */
+    
     /* Create a ticket */
     //var ticketData = oldZoho.createTicket("Test User", "test@scriptr.io", "dashboard builder", "Assist in understanding", "dev0001", "Open");
     
