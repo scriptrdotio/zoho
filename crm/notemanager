@@ -1,0 +1,205 @@
+var config = require("../config");
+
+const API_TYPE = "crm_";
+const API_PREFIX = "api_prefix";
+const API_VER = "api_ver";
+
+/**
+ * Manages Zoho CRM notes
+ * @class NoteManager
+ * @constructor NoteManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: targeted organization's id
+ * @param {Object} [dto.client]: instance of Client
+ */
+function NoteManager(dto){
+    if (!dto || !dto.orgId || !dto.client) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "NoteManager: dto.client and dto.orgId have to be provided"
+        };
+    }
+
+    this.orgId = dto.orgId;
+    this.client = dto.client;
+}
+
+/**
+ * @method getNotes
+ * @param {Object} [filters]
+ * @param {Number} [filters.page ]: To get the list of records from the respective pages. Default value is 1
+ * @param {Number} [filters.per_page ]: To get the list of records available per page. Default value is 200
+ * @return {Object} {"data": array of notes data, "info": {"per_page": total leads per page, "page": returned page index}
+ */
+NoteManager.prototype.getNotes = function(filters){
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Notes",
+        headers: {
+            orgId: this.orgId
+        }
+    };
+
+    if (filters) {
+        requestParams.params = filters;
+    }
+	
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method getNotesFromRecord
+ * @param {String} [recordName] : possible values : leads, accounts, contacts, deals, campaigns, tasks, events, calls, cases, events, calls, solutions, products, vendors, 
+ * pricebooks, quotes, salesorders, purchaseorders, invoices, and custom
+ * @param {String} [recordID]
+ * @param {Number} [filters.page ]: To get the list of records from the respective pages. Default value is 1
+ * @param {Number} [filters.per_page ]: To get the list of records available per page. Default value is 200
+ * @return {Object} {"data": array of notes data, "info": {"per_page": total leads per page, "page": returned page index}
+ */
+NoteManager.prototype.getNotesFromRecord = function(recordName, recordID, filters){
+    if (!recordName || !recordID) {
+        throw {
+            errorCode: "Missing_Parameter",
+            errorDetail: "NoteManager.getNotesFromRecord: recordName and recordID have to be provided"
+        };
+    }
+
+    var requestParams = {
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/" + recordName + "/" + recordID +  "/Notes",
+        headers: {
+            orgId: this.orgId
+        }
+    };
+    
+    if (filters) {
+        requestParams.params = filters;
+    }
+
+    return this.client.callApi(requestParams);
+};
+
+/*
+* @param {Object} [data]
+* @param {String} [data.Note_title] : note title
+* @param {String} [data.Note_Content] : note text
+* @param {String} [data.Parent_Id] : specidy the module id
+* @param {String} [data.se_module] : specify the module type
+* @return 
+*/
+NoteManager.prototype.createNote = function(data){
+     if (!data) {
+        throw {
+            errorCode: "Missing_Parameter",
+            errorDetail: "NoteManager.createNote: data has to be provided"
+        };
+    }
+
+    if (!(data instanceof Array)) {
+        data = [data];
+    }
+    
+    var requestParams = {
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Notes",
+        headers: {
+            orgId: this.orgId
+        },
+        method: "POST",
+        params: {data: data} // mandatory to send data through the field name "data"
+    };
+
+    return this.client.callApi(requestParams);
+};
+
+/*
+* @param {String} [recordName] : specify which record type to update its notes
+* @param {String} [recordID] : specidy which record
+* @param {String} [noteID] : specify which note in that record to be updated
+* @param {Object} [data]
+* @param {String} [data.Note_Title] : new note title
+* @param {String} [data.Note_Content] : new note content
+* @return {Object} [data] : newly updated note object
+*/
+NoteManager.prototype.updateNote = function(recordName, recordID, noteID, data){
+    
+    if (!recordName || !recordID || !noteID) {
+        throw {
+            errorCode: "Missing_Parameter",
+            errorDetail: "NoteManager.updateNote: recordName, recordID and noteID have to be provided"
+        };
+    }
+    if (!data) {
+        throw {
+            errorCode: "Missing_Parameter",
+            errorDetail: "NoteManager.createNote: data has to be provided"
+        };
+    }
+
+    if (!(data instanceof Array)) {
+        data = [data];
+    }
+    
+    var requestParams = {
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/" + recordName + "/" + recordID +  "/Notes/" + noteID,
+        headers: {
+            orgId: this.orgId
+        },
+        method : "PUT",
+        params: {data: data} // mandatory to send data through the field name "data"
+    };
+    
+    return this.client.callApi(requestParams);
+};
+
+/*
+* @param {String} [recordName] : possible module names : leads, accounts, contacts, deals, campaigns, tasks, cases, events, calls, solutions, products, vendors, pricebooks, 
+* quotes, salesorders, purchaseorders, invoices, and custom
+* @param {String} [recordID] : specify which module
+* @param {String} [noteID] : specify which note to delete
+*/
+NoteManager.prototype.deleteNote = function(recordName,recordID,noteID){
+    if (!recordName || !recordID || !noteID) {
+        throw {
+            errorCode: "Missing_Parameter",
+            errorDetail: "NoteManager.deleteNote: recordName, recordID and noteID have to be provided"
+        };
+    }
+    
+    var requestParams = {
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/" + recordName + "/" + recordID +  "/Notes/" + noteID,
+        headers: {
+            orgId: this.orgId
+        },
+        method : "DELETE"
+    };
+    
+    return this.client.callApi(requestParams);
+};
+
+/*
+* @param {Array of Strings} [noteIDsArray] : an array of ids of notes to be deleted
+* @return {Array of Objects} [data] : delete status of each note 
+*/
+NoteManager.prototype.deleteBulkNotes = function(noteIDsArray){
+    if (!noteIDsArray) {
+        throw {
+            errorCode: "Missing_Parameter",
+            errorDetail: "NoteManager.deleteBulkNotes: noteIDsArray has to be provided"
+        };
+    }
+
+    if (!(noteIDsArray instanceof Array)) {
+        noteIDsArray = [noteIDsArray];
+    }
+    
+    var requestParams = {
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Notes?ids=" + noteIDsArray,
+        headers: {
+            orgId: this.orgId
+        },
+        method : "DELETE"
+    };
+    
+    return this.client.callApi(requestParams);
+};
