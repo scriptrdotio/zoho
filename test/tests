@@ -156,13 +156,61 @@ try {
      * Manage zoho desk contacts
      */
     
-    var contactManager = zoho.getContactManager({orgId:orgid, domain: "desk"});
+    var contactManager = zoho.getContactManager({orgId:orgid, domain: "crm"});
     
     /* search contact by email */
-    //var contact = contactManager.searchContactsByFieldValue("test@scriptr.io", "email").data[0];
+    //var contact = contactManager.searchContactsByFieldValue("krismarrier@gmail.com", "email").data[0];
     
     /* list 10 first contacts */
-    //var contactList = contactManager.listContacts({limit:10}); return contactList
+    //var contactList = contactManager.listContacts(); return contactList
+    
+    /*
+    * Manage zoho crm notes
+    */
+    var noteManager = zoho.getNoteManager({orgId:orgid});
+    var noteModule = "Contacts";
+    var noteModuleID = "4041340000000225197";
+    
+    var notes = [];
+    
+    /* get all available notes */
+    //notes = noteManager.getNotes();
+    
+    /* get Notes from a Specific Record */
+    //notes = noteManager.getNotesFromRecord(noteModule,noteModuleID);
+    
+    var noteData = {
+        "Note_Title": "Contacted",
+        "Note_Content": "Need to do further loloing",
+        "Parent_Id": "4041340000000225197",
+        "se_module": "Contacts"
+    };
+    
+    /* create new note */
+    //var createdNote = noteManager.createNote(noteData);
+    
+    var specificNoteData = {
+        "Note_Title": "Contacted",
+        "Note_Content": "Need to do lala further tracking"
+    };
+    
+    var noteID = "4041340000000244002";
+    var newNoteData = {
+        "Note_Title": "Contacted",
+        "Note_Content": "Tracking done. Happy with the customer"
+    };
+    
+    /* update specific note by id */
+    //var updatedNote = noteManager.updateNote(noteModule,noteModuleID,noteID,newNoteData);
+    
+    /* delete specific note */
+    //var deleteResponse = noteManager.deleteNote(noteModule,noteModuleID,noteID);
+    
+    var noteIDs = ["4041340000000225712","4041340000000243003"];
+    /* delete bulk notes by array of ids */
+    var deletedResponse = noteManager.deleteBulkNotes(noteIDs);
+    return deletedResponse;
+    
     
     /*
      * Test backward compatibility
@@ -194,7 +242,9 @@ try {
     /* search tickets  where subject like som*  */
     //var list = oldZoho.getrecordsbysearch("subject", "smo*"); 
     
-    var list = oldZoho.getrecordsbysearch("subject", "dev0001*"); return list;
+    //var list = oldZoho.getrecordsbysearch("subject", "dev0001*"); return list;
+    
+    
     
 }catch(exception){
     return exception;
