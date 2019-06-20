@@ -1,0 +1,263 @@
+var config = require("../config");
+
+const API_TYPE = "crm_";
+const API_PREFIX = "api_prefix";
+const API_VER = "api_ver";
+
+/**
+ * @class AccountManager
+ * @constructor AccountManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: targeted organization's id
+ * @param {Object} [dto.client]: instance of Client
+ */
+function AccountManager(dto) {
+
+    if (!dto || !dto.orgId || !dto.client) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "AccountManager: dto.orgId have to be provided"
+        };
+    }
+
+    this.orgId = dto.orgId;
+    this.client = dto.client;
+}
+
+/**
+ * @method listAccounts
+ * @param {Object} data: Array of lead data, such as: "Company", "Last_Name", "First_Name", "State", etc.,
+ * @param {Object} [filters]: optional filters
+ * @param {String} [filters.fields]: comma separated field names to be included. For example: Last_Name,Email
+ * @param {String} [filters.sort_order]: sort in ascending ("asc") or descending ("desc") order
+ * @param {String} [filters.sort_by]: field name to sort the results by
+ * @param {String} [filters.converted]: set to true to filter by converted leads, set to false for non converted. Use "both" (default) for both cases
+ * @param {String} [filters.approved]: set to true to filter by approved leads, set to false for non converted. Use "both" (default) for both cases
+ * @param {Number} [filters.page]: index of the page to start from (defaults to 1)
+ * @param {Number} [filters.per_page]: number of results per page
+ * @param {Number} [filters.cvid]: number to get the list of records based on custom views (custom_view_id)
+ * @param {Number} [filters.territory_id]: To get the list of records based on the territory
+ * @param {Boolean} [filters.include_child]: To include records from the child territories. Default value is false. 
+ * @return {Object} {"data": array of leads data, "info": {"per_page": total leads per page, "count": total leads, "page": returned page index, "more_records": true/false}
+ * @throw {Error}
+ */
+AccountManager.prototype.listAccounts = function(filters) {
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Accounts",
+        headers: {
+            orgId: this.orgId
+        }
+    };
+    
+    if (filters) {
+        requestParams.params = filters;
+    }
+
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method listSpecificAccount
+ * @param {Object} data: Array of lead data, such as: "Company", "Last_Name", "First_Name", "State", etc.,
+ * @param {Object} [filter]: optional filters
+ * @return {Object} {"data": array of leads data, "info": {"per_page": total leads per page, "count": total leads, "page": returned page index, "more_records": true/false}
+ * @throw {Error}
+ */
+AccountManager.prototype.listSpecificAccount = function(record_id,filter) {
+
+    if (!record_id ) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "AccountManager.listSpecificAccount: data has to be provided"
+        };
+    }
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Accounts" + '/' + record_id,
+        headers: {
+            orgId: this.orgId
+        }
+    };
+    
+    if (filter) {
+        requestParams.params = filter;
+    }
+
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method insertAccount
+ * @param {Object} data: Array of lead data, such as: "Company", "Last_Name", "First_Name", "State", etc.,
+ * @return {Object} lead data
+ * @throws {Error}
+ */
+AccountManager.prototype.insertAccount = function(data) {
+
+    if (!data) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "AccountManager.insertAccount: data has to be provided"
+        };
+    }
+
+    if (!(data instanceof Array)) {
+        data = [data];
+    }
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Accounts",
+        headers: {
+            orgId: this.orgId
+        },
+        method: "POST",
+        params: {data: data} // mandatory to send data through the field name "data"
+    };
+
+    return this.client.callApi(requestParams);
+};
+
+
+/**
+ * @method updateSpecificAccount
+ * @param {Object} data: Array of lead data, such as: "Company", "Last_Name", "First_Name", "State", etc.,
+ * @return {Object} lead data
+ * @throws {Error}
+ */
+AccountManager.prototype.updateSpecificAccount = function(record_id, data) {
+
+    if (!data || !record_id ) {
+
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "AccountManager.updateSpecificAccount: data has to be provided"
+        };
+    }
+
+    if (!(data instanceof Array)) {
+        data = [data];
+    }
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Accounts/" + record_id,
+        headers: {
+            orgId: this.orgId
+        },
+        method: "PUT",
+        params: {data: data} // mandatory to send data through the field name "data"
+    };
+
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method deleteAccount
+ * @param {String} id : the ID of the account,
+ * @throw {Error}
+ */
+AccountManager.prototype.deleteAccount = function(record_id) {
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Accounts/" + record_id,
+        headers: {
+            orgId: this.orgId
+        },
+        method: "DELETE",
+    };
+
+    return this.client.callApi(requestParams);
+};
+
+
+
+/**
+ * @method deleteAccounts
+ * @param {Array} id : array of IDs of account,
+ * @throw {Error}
+ */
+AccountManager.prototype.deleteAccounts = function(id) {
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Accounts?ids=" + id,
+        headers: {
+            orgId: this.orgId
+        },
+        method: "DELETE",
+    };
+
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method listDeletedAccounts
+ * @param {Object} data: Array of lead data, such as: "Company", "Last_Name", "First_Name", "State", etc.,
+ * @param {Object} [filters]: optional filters
+ * @param {Number} [filters.page]: index of the page to start from (defaults to 1)
+ * @param {Number} [filters.per_page]: number of results per page
+ * @throw {Error}
+ */
+AccountManager.prototype.listDeletedAccounts = function(filters) {
+
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Accounts/deleted",
+        headers: {
+            orgId: this.orgId
+        }
+    };
+    
+    if (filters) {
+        requestParams.params = filters;
+    }
+    return this.client.callApi(requestParams);
+};
+
+/**
+ * @method searchAccountsByFieldName
+ * @param {Object} data: Array of lead data, such as: "Company", "Last_Name", "First_Name", "State", etc.,
+ * @param {Object} [filters]: optional filters,
+ * @param {String} [filters.sort_order]: sort in ascending ("asc") or descending ("desc") order
+ * @param {String} [filters.sort_by]: field name to sort the results by
+ * @param {String} [filters.converted]: set to true to filter by converted leads, set to false for non converted. Use "both" (default) for both cases
+ * @param {String} [filters.approved]: set to true to filter by approved leads, set to false for non converted. Use "both" (default) for both cases
+ * @param {Number} [filters.page]: index of the page to start from (defaults to 1)
+ * @param {Number} [filters.per_page]: number of results per page
+ * @throw {Error}
+ */
+AccountManager.prototype.searchAccountsByFieldName = function(fieldValue, fieldName,filters) {
+
+    if(!fieldValue || !fieldName){
+        throw {
+
+            errorCode: "Missing_Parameter",
+            errorDetail: "AccountManager.searchAccountsByPhone: fieldName and fieldValue have to be provided"
+        };
+    }
+    
+    var requestParams = {
+
+        url: config[API_TYPE + API_PREFIX] + "/" +  config[API_TYPE + API_VER] + "/Accounts/search?criteria=(" + fieldName + ":starts_with:" + fieldValue + "*)",
+        headers: {
+            orgId: this.orgId
+        }
+    };
+    
+    if (filters) {
+        requestParams.params = filters;
+    }
+    
+    return this.client.callApi(requestParams);
+};
