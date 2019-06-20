@@ -5,6 +5,7 @@ var taskManagerModule = require("./desk/taskmanager");
 var leadManagerModule = require("./crm/leadmanager");
 var crmContactManagerModule = require("./crm/contactmanager");
 var deskContactManagerModule = require("./desk/contactmanager");
+var noteManagerModule = require("./crm/notemanager");
 
 /**
  * Main entry point to the Zoho connector. Use instances of this class as factories to obtain
@@ -115,10 +116,10 @@ Zoho.prototype.getContactManager = function(dto) {
         case "crm": {
 
             if (!this.crmContactManager) {
-                this.crmContactManager = new deskContactManagerModule.ContactManager({orgId: orgId, client: this.client});               
+                this.crmContactManager = new crmContactManagerModule.ContactManager({orgId: orgId, client: this.client});               
             }
 
-            return this.crmontactManager;
+            return this.crmContactManager;
         }
         default: throw {
 
@@ -126,4 +127,19 @@ Zoho.prototype.getContactManager = function(dto) {
             errorDetails: dto.doamin + " is not supported"
         }
     }
+};
+
+/**
+ * @method getNoteManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: optional organization id, if not provided will try to used default org id if available
+ * @return {Object} instance of crm/contactmanager depending on the domain
+ */
+Zoho.prototype.getNoteManager = function(dto){
+    var orgId = dto && dto.orgId ? dto.orgId : this.defaultOrgId;
+    if (!this.noteManager) {
+        this.noteManager = new noteManagerModule.NoteManager({orgId: orgId, client: this.client});
+    }
+
+    return this.noteManager;
 };
