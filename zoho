@@ -5,6 +5,7 @@ var taskManagerModule = require("./desk/taskmanager");
 var leadManagerModule = require("./crm/leadmanager");
 var crmContactManagerModule = require("./crm/contactmanager");
 var deskContactManagerModule = require("./desk/contactmanager");
+var accountManagerModule=require('./crm/accountmanager');
 var noteManagerModule = require("./crm/notemanager");
 
 /**
@@ -127,6 +128,22 @@ Zoho.prototype.getContactManager = function(dto) {
             errorDetails: dto.doamin + " is not supported"
         }
     }
+};
+
+/**
+ * @method getAccountManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: optional organization id, if not provided will try to used default org id if available
+ */
+Zoho.prototype.getAccountManager = function(dto) {
+
+    var orgId = dto && dto.orgId ? dto.orgId : this.defaultOrgId;
+    if (!this.accountManager) {
+        this.accountManager = new accountManagerModule.AccountManager({orgId: orgId, client: this.client});
+    }
+
+    return this.accountManager;
+
 };
 
 /**
