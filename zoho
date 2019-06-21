@@ -7,6 +7,8 @@ var crmContactManagerModule = require("./crm/contactmanager");
 var deskContactManagerModule = require("./desk/contactmanager");
 var accountManagerModule=require('./crm/accountmanager');
 var noteManagerModule = require("./crm/notemanager");
+var dealManagerModule = require("./crm/dealmanager");
+
 
 /**
  * Main entry point to the Zoho connector. Use instances of this class as factories to obtain
@@ -159,4 +161,21 @@ Zoho.prototype.getNoteManager = function(dto){
     }
 
     return this.noteManager;
+};
+
+
+/**
+ * @method getDealManager
+ * @param {Object} [dto]
+ * @param {String} [dto.orgId]: optional organization id, if not provided will try to used default org id if available
+ */
+Zoho.prototype.getDealManager = function(dto) {
+
+    var orgId = dto && dto.orgId ? dto.orgId : this.defaultOrgId;
+    if (!this.dealManager) {
+        this.dealManager = new dealManagerModule.DealManager({orgId: orgId, client: this.client});
+    }
+
+    return this.dealManager;
+
 };
