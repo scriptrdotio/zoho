@@ -5,10 +5,10 @@
 var zohoModule = require("../zoho");
 var zohoCompatibilityModule = require("../lib/zoho");
 var username = "test"; // replace with valid data
-var orgid = "634062529"; // replace with valid data
+var orgid = "691174753"; // replace with valid data
 var validDptId = "128390000000006907"; // replace with valid data
 var validContactId = "128390000000093003"; // replace with valid data
-var validPortalName = "scriptrio"; // replace with valid data
+var validPortalName = "scriptr"; // replace with valid data
 var validDptName = "scriptrio"; // replace with valid data
 var ticketId = "";
 try {
@@ -167,11 +167,13 @@ try {
     /*
     * Manage zoho crm notes
     */
-    var noteManager = zoho.getNoteManager({orgId:orgid});
+   
+    /*var noteManager = zoho.getNoteManager({orgId:orgid});
     var noteModule = "Contacts";
     var noteModuleID = "4041340000000225197";
     
     var notes = [];
+    */
     
     /* get all available notes */
     //notes = noteManager.getNotes();
@@ -205,11 +207,11 @@ try {
     
     /* delete specific note */
     //var deleteResponse = noteManager.deleteNote(noteModule,noteModuleID,noteID);
+    //var noteIDs = ["4041340000000225712","4041340000000243003"];
     
-    var noteIDs = ["4041340000000225712","4041340000000243003"];
     /* delete bulk notes by array of ids */
-    var deletedResponse = noteManager.deleteBulkNotes(noteIDs);
-    return deletedResponse;
+    //var deletedResponse = noteManager.deleteBulkNotes(noteIDs);
+    //return deletedResponse;
     
     
     /*
@@ -222,7 +224,7 @@ try {
         department: "scriptrio"
     };
     
-    var oldZoho = new zohoCompatibilityModule.zoho(config);
+    //var oldZoho = new zohoCompatibilityModule.zoho(config);
     
     /* Create a ticket */
     //var ticketData = oldZoho.createTicket("Test User", "test@scriptr.io", "dashboard builder", "Assist in understanding", "dev0001", "Open");
@@ -249,36 +251,33 @@ try {
     */
     var accountManager = zoho.getAccountManager({orgId:orgid});
 
-    //list all Accounts
+    /* list all Accounts */
     /*
     var accountList=accountManager.listAccounts();
     return accountList;
     */
     
-    //list specific account
+    /* list specific account */
     /*
-    var record_id='4041554000000244008'; //replace with dalid id
+    var record_id='4041554000000244008'; //replace with valid id
     var recordSpecificAccount=accountManager.listSpecificAccount(record_id);
     return recordSpecificAccount;
     */
     
-    //insert account
-    /*
+    /* insert account */
+    
     var data = {
        	"Account_Name": "Youssef",
       	"Account_Type": 'Competitor', //ddl
        	"Account_Site": 'cmc.com',
 		"Employees": '2',
 		"Industry": 'ASP (Application Server Provider)', //ddl
-		"Phone": '1234-567',
-				
+		"Phone": '1234-567'	
     };
     
-    var accountData=accountManager.insertAccount(data);
-    */
+    //var accountData=accountManager.insertAccount(data);
    
-    //update a specific account
-	/*
+    /* update a specific account */	
     var record_id="4041554000000242002"; //replace with valid record ID
     var data = {
         "id":record_id, //mendatory
@@ -289,49 +288,105 @@ try {
 		"Industry": 'ASP (Application Server Provider)', //ddl
 		"Phone": '99999',
 				
-    };
+    };   
+    //var updateAccountData=accountManager.updateSpecificAccount(record_id,data);
     
-    var updateAccountData=accountManager.updateSpecificAccount(record_id,data);
-	*/    
-    
-    //delete a specific account
-    /*
+    /* delete a specific account */
     var id="4041554000000244008"; //enter valid account ID
-    var deleteAccount=accountManager.deleteAccount(id);
-    */
+    //var deleteAccount=accountManager.deleteAccount(id);
     
-    //delete accounts 
-    /*
+    /* delete accounts */    
     var ids=['4041554000000237141','4041554000000242002','4041554000000242008']; //enter an array of valid ids to be deleted
-    var deleteAccounts=accountManager.deleteAccounts(ids);
-    */
+    //var deleteAccounts=accountManager.deleteAccounts(ids);
     
-    //get list of all the deleted accounts
-    /*
+    /* get list of all the deleted accounts */
     var deletedListAccounts=accountManager.listDeletedAccounts();
-    return deletedListAccounts;
-    */
+    //return deletedListAccounts;
     
-    //search accounts by phone
-    /*
+    /* search accounts by phone */
     var phone="12";
-    var searchByPhone=accountManager.searchAccountsByFieldName(phone,"Phone");
-    return searchByPhone;
-    */
+    //var searchByPhone=accountManager.searchAccountsByFieldName(phone,"Phone");
+    //return searchByPhone;
     
-     //search accounts by account name
-    /*
+    
+    /* search accounts by account name */
     var accountName="chris";
-    var searchByPhone=accountManager.searchAccountsByFieldName(accountName,"Account_Name");
-    return searchByPhone;
+    //var searchByName=accountManager.searchAccountsByFieldName(accountName,"Account_Name");
+    //return searchByName;
+ 
+    
+    /* search accounts by industry */
+    var industry="ASP";
+    //var searchByIndustry=accountManager.searchAccountsByFieldName(industry,"Industry");
+    //return searchByIndustry;
+    
+    
+    /*
+    * Manage zoho crm deals
     */
     
-     //search accounts by industry
-    /*
-    var industry="ASP";
-    var searchByPhone=accountManager.searchAccountsByFieldName(industry,"Industry");
-    return searchByPhone;
-    */
+    var dealManager = zoho.getDealManager({orgId:orgid});
+
+    /* list all deals */
+   	//var dealList=dealManager.listDeals();
+    //return dealList;
+   	
+    
+    /* list specific deal */
+    var record_id='4041554000000257054'; //replace with valid id
+    //var recordSpecificDeal=dealManager.listSpecificDeal(record_id);
+    //return recordSpecificDeal;
+    
+    
+    /* insert deal */
+    var data = {		
+        "Closing_Date": "2019-06-30",
+        "Deal_Name": "test 1",
+        "Stage": "Value Proposition", //ddl
+        "Account_Name": {
+            "name": "Youssef", //enter valid account name
+            "id": "4041554000000248002" //enter valid account id
+        }
+    };   
+    //var dealData=dealManager.insertDeal(data);
+   
+    /* update a specific deal */
+    var record_id="4041554000000257027"; //replace with valid record ID
+    var data = {		
+        "Closing_Date": "2019-04-09",
+        "Deal_Name": "test 2",
+        "Stage": "Value Proposition", //ddl
+        "Account_Name": {
+            "name": "Youssef", //enter valid account name
+            "id": "4041554000000248002" //enter valid account id
+        }
+    };
+    //var updateDealData=dealManager.updateSpecificDeal(record_id,data);
+	    
+    
+    /* delete a specific deal */
+    var id="4041554000000257027"; //enter valid deal ID
+    //var deleteDeal=dealManager.deleteDeal(id);
+    
+    
+    /* delete deals  */
+    var ids=['4041554000000237141','4041554000000257081','4041554000000257099','4041554000000257117']; //enter an array of valid ids to be deleted
+    //var deleteDeals=dealManager.deleteDeals(ids);
+    
+    /* get list of all the deleted deals */
+    //var deletedListDeals=dealManager.listDeletedDeals();
+    //return deletedListDeals;
+    
+    /* search deals by stage */
+    var stage="Qualification";
+    //var searchByStage=dealManager.searchDealsByFieldName(stage,"Stage");
+    //return searchByStage;
+    
+    
+    //search accounts by account Name
+    var dealName="qwerty";
+    //var searchByName=dealManager.searchDealsByFieldName(dealName,"Deal_Name");
+    //return searchByName;
     
     
 }catch(exception){
