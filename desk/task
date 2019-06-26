@@ -54,7 +54,7 @@ Task.prototype.update = function(data) {
     }else {
 
         var params = {};
-        var exclude = ["id", "contactId", "completedTime", "orgId", "client"];
+        var exclude = ["id", "contactId", "completedTime", "orgId", "client", "webUrl", "modifiedBy"];
         for (var key in this){
 
             if (exclude.indexOf(key) == -1) {
