@@ -154,7 +154,7 @@ zoho.prototype.getrecordsbysearch = function(fieldName, fieldValue, department, 
     var departmentId = this.organizationManager.findDepartmentByFieldName(this.organization.id, department, "name").id;       
     var params = {
 
-        from: toindex ? toindex : 0,
+        fromindex ? fromindex : 0,//toindex ? toindex : 0,
         limit: toindex && fromindex ? toindex - fromindex : LIMIT, 
         departmentId: departmentId
     };
@@ -202,15 +202,5 @@ zoho.prototype._convertToLegacyStructure = function(ticketList) {
 };
 
 zoho.prototype.getrecords = function(fieldName, fieldValue, department){
-    if(!department){
-        department = config.department
-    }
-    var url ="https://support.zoho.com/api/json/requests/getrecords"
-    var params = {
-        "authtoken":config.supportAuthToken,
-        "portal":config.portal,
-        "department":department,
-    }
-
-    return  client.callApi(url,params);
+   return this.getrecordsbysearch(fieldName, fieldValue, department, 0, LIMIT);
 };
