@@ -48,3 +48,8 @@ var config = {
     
 var legacyZoho = new zohoCompatibilityModule.zoho(config);
 ```
+
+# Miscellaneous 
+- In the current you must create contacts in Zoho and use any of those contacts when creating tickets from the connector (you can use the connector to create contacts. Make sure you have the right OAuth scope)
+
+
