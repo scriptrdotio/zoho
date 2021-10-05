@@ -20,6 +20,9 @@ Once done creating the zoho app in zoho's developer console, copy/paste the valu
 
 *Note2:* in the above examples, we assumed that the zoho connector was deployed in /zoho. Make sure it is the case in your scriptr.io workspace, otherwise, fix accordingly to match your current deployment. For example, if zoho is deployed in /modules/zoho, then the callback URL should be https://api.scriptrapps.io/modules/zoho/oauth/getAccessToken?auth_token=<your_auth_token>
 
+**Note3:** Make sure to use the right zoho scope as it could lead to request failure (checks the scriptr.io logs for potential 403 error code). The scope varies depending on the 
+API operation. Desk scopes can be found [here](https://desk.zoho.com/DeskAPIDocument#OauthTokens#OAuthScopes)
+
 # How to generate an access token from zoho
 You can do this manually using the following steps (or you can automate the process using the same scripts):
 
